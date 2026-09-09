@@ -1,7 +1,7 @@
 ---
 name: "review"
 description: "Reviews recent Mozecek memory for duplicates, contradictions and low-confidence rows and proposes supersede or forget with reasons, applying them only on request. Use when memory quality is in question or before relying on it for an important decision."
-compatibility: "Claude Code (headless -p and interactive)"
+compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"
   version: "0.1.0"
@@ -26,10 +26,10 @@ Input: **$ARGUMENTS**
 </input>
 
 <dependencies>
-- @file ../../references/agent-charter.md — shared values and the order of authority. **Always load.**
-- @file ../../references/security-rules.md — security rules. **Always load.**
-- @file ../../references/memory-model.md — tiers, the supersede chain, confidence.
-- @file ../../references/tool-cheatsheet.md — parameters of the `mozecek_*` tools, `list` above all.
+- references/agent-charter.md — shared values and the order of authority. **Always load.**
+- references/security-rules.md — security rules. **Always load.**
+- references/memory-model.md — tiers, the supersede chain, confidence.
+- references/tool-cheatsheet.md — parameters of the `mozecek_*` tools, `list` above all.
 </dependencies>
 
 <rules>
