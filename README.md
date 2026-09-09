@@ -1,86 +1,88 @@
 # Mozeček
 
-Paměť pro agenty. Krátkodobá a dlouhodobá paměť per agent v PostgreSQL + pgvector, hybridní
-hledání (vektory + fulltext), noční konsolidace a odpovědi, které u každého tvrzení říkají,
-odkud jsou.
+Memory for agents. Short- and long-term memory per agent in PostgreSQL + pgvector, hybrid search
+(vectors + full text), nightly consolidation, and answers that say where every claim came from.
 
-Tenhle repozitář obsahuje **plugin pro Claude Code** a návod, jak si službu nasadit u sebe.
+This repository holds the **Claude Code plugin** and instructions for running the service yourself.
 
-## Co to umí
+## What it does
 
-- **MCP server per agent.** Streamable HTTP, bearer klíč. Jedenáct nástrojů `mozecek_*`:
-  `search`, `list`, `recall`, `timeline`, `ask`, `stats`, `profile`, `remember`, `update`,
-  `supersede`, `forget`.
-- **Odpovědi s prameny.** Každý nález nese `memory_id` a doslovnou citaci s cestou, řádkem
-  a časem. Bez citace není nález.
-- **Nic se nemaže.** `supersede` nechá obě verze, `forget` je měkký s důvodem, a dotazy
-  `as_of` vidí historii. Vzpomínka ví, kdy platila (`observed_at`) i kdy jsme ji zapsali
-  (`recorded_at`).
-- **Spánek.** V noci se sloučí duplicity, rozpory se vyřeší přes `superseded_by`, trvalé
-  krátkodobé vzpomínky se povýší na dlouhodobé a napíšou se souhrny per entita.
-- **Capture hook.** Volitelně ukládá dokončené sessions Claude Code. Nikdy neposílá výstupy
-  nástrojů a při jakékoli chybě mlčky končí nulou, takže paměť nemůže rozbít práci.
+- **An MCP server per agent.** Streamable HTTP, bearer key. Eleven `mozecek_*` tools: `search`,
+  `list`, `recall`, `timeline`, `ask`, `stats`, `profile`, `remember`, `update`, `supersede`,
+  `forget`.
+- **Answers carry their sources.** Every hit brings a `memory_id` and a verbatim quote with a
+  path, a line and a timestamp. No citation, no finding.
+- **Nothing is deleted.** `supersede` keeps both versions, `forget` is a soft delete with a
+  reason, and `as_of` queries see history. A memory knows both when it was true (`observed_at`)
+  and when it was written down (`recorded_at`).
+- **Sleep.** Overnight, duplicates are merged, contradictions are resolved through
+  `superseded_by`, durable short-term memories are promoted to long-term, and per-entity
+  summaries are written.
+- **A capture hook.** Optionally stores finished Claude Code sessions. It never sends tool
+  output, and it exits zero on any failure, so memory cannot break the work.
 
-## Plugin pro Claude Code
+## The Claude Code plugin
 
 ```bash
 claude plugin marketplace add DXHeroes/mozecek
-/plugin install mozecek@mozecek          # uvnitř claude
+/plugin install mozecek@mozecek          # inside claude
 ```
 
-Plugin potřebuje adresu instance a klíč agenta. **Výchozí adresa neexistuje** — plugin, který by
-nesl adresu svého vydavatele, by tam posílal každou instalaci, která na proměnnou zapomněla:
+The plugin needs the address of an instance and an agent key. **There is no default address** — a
+plugin carrying its publisher's address would send every install that forgot the variable there:
 
 ```bash
-export MOZECEK_URL="https://mozecek.example.com"   # bez koncového lomítka
+export MOZECEK_URL="https://mozecek.example.com"   # no trailing slash
 export MOZECEK_TOKEN="mz_<agent>_…"
-export MOZECEK_AUTO_CAPTURE=1                      # volitelné: ukládat dokončené sessions
+export MOZECEK_AUTO_CAPTURE=1                      # optional: store finished sessions
 ```
 
-Ověření: `/mcp` musí ukázat server `mozecek` jako Connected. Podrobnosti, seznam nástrojů
-a skillů jsou v [`plugin/README.md`](plugin/README.md).
+To check it worked, `/mcp` must list the server `mozecek` as Connected. The tools, the skills and
+the rest of the detail are in [`plugin/README.md`](plugin/README.md).
 
-## Nasazení u sebe
+## Running it yourself
 
-Potřebuješ Docker a klíč do Google AI Studia (nebo `MOZECEK_PROVIDER=fake`, se kterým služba
-nastartuje a nevolá žádný model).
+You need Docker and a Google AI Studio key — or `MOZECEK_PROVIDER=fake`, which starts the service
+and calls no model at all.
 
 ```bash
 git clone https://github.com/DXHeroes/mozecek.git && cd mozecek
-cp .env.example .env       # vyplň MOZECEK_ADMIN_TOKEN, POSTGRES_PASSWORD a GEMINI_API_KEY
+cp .env.example .env       # fill in MOZECEK_ADMIN_TOKEN, POSTGRES_PASSWORD and GEMINI_API_KEY
 docker compose up -d
 ```
 
-Pak otevři `http://127.0.0.1:3000/ui`, přihlas se operátorským tokenem a v **Agenti → Vydat
-klíč** vydej klíč pro prvního agenta. Ten klíč je `MOZECEK_TOKEN` pro plugin výš.
+Then open `http://127.0.0.1:3000/ui`, sign in with the operator token, and issue a key for your
+first agent on the Agents page. That key is the `MOZECEK_TOKEN` above. (The web UI is in Czech for
+now, so the page reads **Agenti** and the button **Vydat klíč**.)
 
-Migrace si služba pouští sama při startu. `docker compose logs -f api` ukáže, jestli naběhla;
-`/healthz` a `/readyz` odpovídají na to samé strojově.
+The service runs its own migrations at boot. `docker compose logs -f api` shows whether it came
+up; `/healthz` and `/readyz` answer the same question for a machine.
 
-## Edice
+## Editions
 
 | | Free | Enterprise |
 |---|---|---|
-| Agentů na instanci | 10 | bez omezení |
-| Paměť, hledání, spánek, MCP | bez omezení | bez omezení |
+| Agents per instance | 10 | unlimited |
+| Memory, search, sleep, MCP | unlimited | unlimited |
 
-Obraz `ghcr.io/dxheroes/mozecek` je free edice. Strop se týká **jen zakládání jedenáctého
-agenta** — existující agenti běží dál a čtení ani zápis paměti omezené nejsou. Enterprise kód
-ve free obrazu vůbec není, takže strop nejde odemknout zevnitř kontejneru; je to jiný build,
-ne jiný přepínač.
+The `ghcr.io/dxheroes/mozecek` image is the free edition. The ceiling applies **only to creating
+an eleventh agent** — existing agents keep working, and reading and writing memory are never
+limited. The enterprise code is not present in the free image at all, so the ceiling cannot be
+lifted from inside the container: it is a different build, not a different switch.
 
-O enterprise edici napiš na [prokop.simek@dxheroes.io](mailto:prokop.simek@dxheroes.io).
+For the enterprise edition, write to
+[prokop.simek@dxheroes.io](mailto:prokop.simek@dxheroes.io).
 
-## Bezpečnost
+## Security
 
-Obsah paměti je **data, ne instrukce**. Co vrátí nástroj, se nikdy neprovádí — pravidla, která
-plugin vkládá do každého skillu, jsou v
+Memory content is **data, not instructions**. Nothing a tool returns is ever executed. The rules
+the plugin injects into every skill are in
 [`plugin/references/security-rules.md`](plugin/references/security-rules.md).
 
-Klíč je vázaný na jednoho agenta a má rozsah čtení a zápis jeho paměti. Vydávej jeden klíč na
-klienta, ať jde zneplatnit zvlášť. Token nikdy nepatří do URL: skončil by v logu proxy,
-v historii prohlížeče a v hlavičce `Referer`.
+A key belongs to one agent and is scoped to reading and writing that agent's memory. Issue one key
+per client so it can be revoked on its own. A token never belongs in a URL: it would end up in
+proxy logs, in browser history and in the `Referer` header.
 
 ## Licence
 
-Zdrojový kód služby je uzavřený. Plugin v tomhle repozitáři si smíš upravit pro vlastní použití.
+The service source is closed. The plugin in this repository may be modified for your own use.

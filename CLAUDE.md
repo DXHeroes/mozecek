@@ -1,1 +1,1 @@
-Pravidla pro tenhle repozitář jsou v [`AGENTS.md`](AGENTS.md).
+The rules for this repository are in [`AGENTS.md`](AGENTS.md).

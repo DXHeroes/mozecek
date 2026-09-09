@@ -25,7 +25,7 @@ const LINES = [
   {
     type: 'user',
     timestamp: '2026-09-07T08:00:00Z',
-    message: { role: 'user', content: 'Co jsme rozhodli o cenách?' },
+    message: { role: 'user', content: 'What did we decide about pricing?' },
   },
   {
     type: 'assistant',
@@ -33,7 +33,7 @@ const LINES = [
     message: {
       role: 'assistant',
       content: [
-        { type: 'text', text: 'Podívám se do mozku.' },
+        { type: 'text', text: 'Let me look in memory.' },
         { type: 'tool_use', name: 'Bash', input: { command: 'jq . brain/index/meetings.json' } },
       ],
     },
@@ -57,7 +57,7 @@ const LINES = [
       content: [
         {
           type: 'text',
-          text: 'Token je xoxb-9999-8888-zzzzzzzzzzzz a klíč sk-abcdefghijklmnopqrstuvwx.',
+          text: 'The token is xoxb-9999-8888-zzzzzzzzzzzz and the key is sk-abcdefghijklmnopqrstuvwx.',
         },
       ],
     },
@@ -159,7 +159,7 @@ test('extractTurns drops tool results, keeps tool names and redacts', () => {
     turns.map((t) => t.role),
     ['user', 'assistant', 'assistant'],
   );
-  assert.equal(turns[0].text, 'Co jsme rozhodli o cenách?');
+  assert.equal(turns[0].text, 'What did we decide about pricing?');
   assert.match(turns[1].text, /\[tool: Bash\]/);
   assert.equal(turns[0].ts, '2026-09-07T08:00:00Z');
   const all = turns.map((t) => t.text).join('\n');
@@ -175,16 +175,16 @@ test('extractTurns drops tool results, keeps tool names and redacts', () => {
 
 test('extractTurns trims the oldest turns over the limits', () => {
   const jsonl = Array.from({ length: 12 }, (_, i) =>
-    JSON.stringify({ type: 'user', message: { role: 'user', content: `zpráva ${i}` } }),
+    JSON.stringify({ type: 'user', message: { role: 'user', content: `message ${i}` } }),
   ).join('\n');
   const byCount = extractTurns(jsonl, { maxTurns: 3 });
   assert.deepEqual(
     byCount.map((t) => t.text),
-    ['zpráva 9', 'zpráva 10', 'zpráva 11'],
+    ['message 9', 'message 10', 'message 11'],
   );
   const byChars = extractTurns(jsonl, { maxChars: 20 });
   assert.ok(byChars.reduce((sum, t) => sum + t.text.length, 0) <= 20);
-  assert.equal(byChars.at(-1).text, 'zpráva 11');
+  assert.equal(byChars.at(-1).text, 'message 11');
 });
 
 test('tailFile returns the tail and drops the partial first line', () => {

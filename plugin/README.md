@@ -1,125 +1,129 @@
 # Mozeček — plugin
 
-Paměť pro agenta: MCP nástroje `mozecek_*` (`search`, `list`, `recall`, `remember`, `update`,
-`supersede`, `forget`, `timeline`, `ask`, `stats`, `profile`), Stop hook, který ukládá
-dokončenou session, a skilly pro práci s pamětí. Služba samotná (Postgres + pgvector, Gemini,
-MCP endpoint) běží zvlášť; jak si ji nasadit, je v [`../README.md`](../README.md).
+Memory for an agent: the `mozecek_*` MCP tools (`search`, `list`, `recall`, `remember`, `update`,
+`supersede`, `forget`, `timeline`, `ask`, `stats`, `profile`), a Stop hook that stores a finished
+session, and skills for working with memory. The service itself (Postgres + pgvector, Gemini, the
+MCP endpoint) runs separately; how to deploy it is in [`../README.md`](../README.md).
 
-## Rychlý start
+## Quick start
 
-Klíč agenta (`mz_<agent>_…`) vydá operátor v UI Mozečku (**Agenti → Vydat klíč**) nebo příkazem
-`node packages/cli/dist/main.js onboard --slug <slug> --name "<jméno>"` u služby. Zobrazí se jen
-jednou. Jeden klíč na klienta, aby šel zneplatnit zvlášť. Slug agenta je uvnitř tokenu, takže
-ho nikde nenastavuješ.
+An agent key (`mz_<agent>_…`) is issued by an operator in the Mozeček web UI, on the Agents page,
+or with `node packages/cli/dist/main.js onboard --slug <slug> --name "<name>"` next to the
+service. It is shown once. Use one key per client so it can be revoked on its own. The agent slug
+is inside the token, so you never set it anywhere.
 
 ```bash
-claude plugin marketplace add DXHeroes/mozecek   # jednou; nebo cesta k lokálnímu checkoutu
-/plugin install mozecek@mozecek                  # uvnitř claude
+claude plugin marketplace add DXHeroes/mozecek   # once; or a path to a local checkout
+/plugin install mozecek@mozecek                  # inside claude
 ```
 
-Konfigurace jde z prostředí. Interaktivní `claude` čte proměnné jen z prostředí shellu, takže
-do `~/.zshrc`:
+Configuration comes from the environment. Interactive `claude` reads variables only from the
+shell environment, so put them in `~/.zshrc`:
 
 ```bash
-export MOZECEK_URL="https://mozecek.example.com"   # adresa tvé instance, bez koncového lomítka
+export MOZECEK_URL="https://mozecek.example.com"   # your instance, no trailing slash
 export MOZECEK_TOKEN="mz_<agent>_…"
-export MOZECEK_AUTO_CAPTURE=1                      # volitelné: ukládat dokončené sessions
+export MOZECEK_AUTO_CAPTURE=1                      # optional: store finished sessions
 ```
 
-Nebo totéž jako blok `env` v `~/.claude/settings.json` (Claude Code ho předá pluginu i hooku).
+Or the same as an `env` block in `~/.claude/settings.json`, which Claude Code passes to both the
+plugin and the hook.
 
-**Ověření.** `/mcp` ukáže server `mozecek` jako Connected, `/plugin` plugin `mozecek`.
-První dotaz: `/mozecek:recall proč jsme přešli na Attio`.
+**Checking it worked.** `/mcp` lists the server `mozecek` as Connected, `/plugin` lists the plugin
+`mozecek`. A first question: `/mozecek:recall why did we move to Attio`.
 
-Stránka **Připojení** v UI Mozečku (`/ui/connect`) tyhle kroky vypíše s doplněnou adresou
-a klíčem k zkopírování, včetně variant pro Cursor a jiné MCP klienty.
+The **Připojení** page in the Mozeček UI (`/ui/connect`) prints these steps with the real address
+and key filled in and a copy button, including variants for Cursor and other MCP clients.
 
-## Instalace bez pluginu
+## Without the plugin
 
-Jen MCP server, bez skillů a hooku:
+The MCP server alone, without the skills and the hook:
 
 ```bash
 claude mcp add --transport http --scope user mozecek "$MOZECEK_URL/mcp" \
   --header "Authorization: Bearer $MOZECEK_TOKEN"
 ```
 
-Endpoint je bez slugu: klíč patří jednomu agentovi, takže token sám určí, čí paměť odpovídá.
-`/mcp/<agent>` funguje dál a je jediná varianta pro operátorský token.
+The endpoint carries no slug: a key belongs to one agent, so the token alone says whose memory
+answers. `/mcp/<agent>` still works and is the only option for an operator token.
 
-Marketplace je tenhle repozitář (`.claude-plugin/marketplace.json`). Headless agent si plugin
-zapíná v `.claude/settings.json` a proměnné bere z prostředí aplikace.
+The marketplace is this repository (`.claude-plugin/marketplace.json`). A headless agent enables
+the plugin in `.claude/settings.json` and takes the variables from the application environment.
 
-## Proměnné prostředí
+## Environment variables
 
-| Proměnná | K čemu | Výchozí |
+| Variable | What for | Default |
 |---|---|---|
-| `MOZECEK_TOKEN` | bearer token agenta (čtení i zápis paměti) | — (bez něj se server nepřipojí) |
-| `MOZECEK_URL` | základ API a MCP endpointu, **bez koncového lomítka** | — (bez něj se server nepřipojí) |
-| `MOZECEK_AGENT` | slug agenta; přepis pro případ, kdy nemá vyjít z tokenu | slug uvnitř `MOZECEK_TOKEN` |
-| `MOZECEK_AUTO_CAPTURE` | `1` zapne Stop hook, který posílá session do paměti | vypnuto |
-| `MOZECEK_CAPTURE_MAX_KB` | kolik konce přepisu session hook čte | `256` |
-| `MOZECEK_SYNC_MAX_S` | strop délky jednoho běhu synchronizace | `1500` |
-| `MOZECEK_DEBUG` | `1` = hook píše důvod na stderr | vypnuto |
+| `MOZECEK_TOKEN` | the agent's bearer token (reads and writes its memory) | — (without it the server does not connect) |
+| `MOZECEK_URL` | base of the API and the MCP endpoint, **no trailing slash** | — (without it the server does not connect) |
+| `MOZECEK_AGENT` | agent slug; an override for when it must not come from the token | the slug inside `MOZECEK_TOKEN` |
+| `MOZECEK_AUTO_CAPTURE` | `1` enables the Stop hook that sends a session into memory | off |
+| `MOZECEK_CAPTURE_MAX_KB` | how much of the transcript's tail the hook reads | `256` |
+| `MOZECEK_DEBUG` | `1` makes the hook write its reason to stderr | off |
 
-Hodnoty patří do profilu shellu, do env souboru agenta nebo do proměnných aplikace.
+The values belong in a shell profile, in an agent's env file, or in an application's variables.
 
-Interaktivní instalace je může držet jako volby pluginu (`/plugin configure mozecek`); hook je
-pak čte z `CLAUDE_PLUGIN_OPTION_TOKEN`, `_URL` a `_AUTO_CAPTURE`. Proměnná prostředí vyhrává nad
-volbou pluginu, takže jeden běh může nastavení přebít.
+An interactive install can hold them as plugin options (`/plugin configure mozecek`); the hook
+then reads them from `CLAUDE_PLUGIN_OPTION_TOKEN`, `_URL` and `_AUTO_CAPTURE`. An environment
+variable wins over a plugin option, so a single run can override an installed value.
 
-**Výchozí adresa neexistuje.** Bez `MOZECEK_URL` se MCP server nepřipojí a capture hook mlčí.
-Je to schválně: plugin, který by nesl adresu svého vydavatele, by tam posílal každou instalaci,
-která na proměnnou zapomněla.
+**There is no default address.** Without `MOZECEK_URL` the MCP server does not connect and the
+capture hook stays quiet. That is deliberate: a plugin carrying its publisher's address would
+send every install that forgot the variable there.
 
-**Koncové lomítko v `MOZECEK_URL`.** `capture.mjs` si ho usekne sám, ale `.mcp.json` skládá
-adresu MCP serveru rozvinutím proměnné (`${MOZECEK_URL}/mcp`) a rozvinutí nic upravit neumí.
-`https://mozecek.example.com/` by tak dalo `//mcp`. Proměnnou zapisuj vždycky bez lomítka.
+**Trailing slash in `MOZECEK_URL`.** `capture.mjs` strips one itself, but `.mcp.json` builds the
+MCP server's address by expanding the variable (`${MOZECEK_URL}/mcp`), and expansion cannot edit
+anything. `https://mozecek.example.com/` would therefore produce `//mcp`. Always write the
+variable without a trailing slash.
 
-**Interaktivní `claude` vs. headless běh.** Naplánovaný běh si prostředí načte z env souboru
-agenta. Interaktivní `claude` spuštěný z terminálu ten soubor nečte — hook i MCP server vidí jen
-prostředí shellu. Aby capture a paměť fungovaly i tam, exportuj `MOZECEK_*` v profilu shellu.
+**Interactive `claude` versus a headless run.** A scheduled run loads its environment from the
+agent's env file. Interactive `claude` started from a terminal does not read that file — the hook
+and the MCP server see only the shell environment. For capture and memory to work there too,
+export `MOZECEK_*` in your shell profile.
 
-## Nástroje `mozecek_*`
+## The `mozecek_*` tools
 
-| Nástroj | Scope | Co dělá |
+| Tool | Scope | What it does |
 |---|---|---|
-| `mozecek_search` | read | hybridní hledání (vektor + fulltext), nálezy s citacemi |
-| `mozecek_list` | read | výpis podle filtrů bez dotazu |
-| `mozecek_recall` | read | celý obsah jedné vzpomínky včetně řetězce náhrad |
-| `mozecek_timeline` | read | vývoj tématu nebo entity v čase |
-| `mozecek_ask` | read | odpověď modelu nad nálezy, každé tvrzení s `[n]` |
-| `mozecek_stats` | read | počty a poslední spánek |
-| `mozecek_profile` | read | profil agenta (i jako resource `mozecek://agents/{agent}/profile`) |
-| `mozecek_remember` | write | zápis vzpomínky, napřed `search` na duplicity |
-| `mozecek_update` | write | oprava štítků, entit, důležitosti |
-| `mozecek_supersede` | write | tvrzení už neplatí, obě verze zůstávají |
-| `mozecek_forget` | write | měkké zapomenutí s důvodem |
+| `mozecek_search` | read | hybrid search (vector + full text), hits carry citations |
+| `mozecek_list` | read | list by filters, without a query |
+| `mozecek_recall` | read | the full content of one memory with its supersede chain |
+| `mozecek_timeline` | read | how a topic or an entity changed over time |
+| `mozecek_ask` | read | a model answer over the hits, every claim cited as `[n]` |
+| `mozecek_stats` | read | counts and the last sleep run |
+| `mozecek_profile` | read | the agent's profile (also as the resource `mozecek://agents/{agent}/profile`) |
+| `mozecek_remember` | write | store a memory; `search` for duplicates first |
+| `mozecek_update` | write | fix tags, entities, importance |
+| `mozecek_supersede` | write | the statement no longer holds; both versions stay |
+| `mozecek_forget` | write | soft delete with a reason |
 
-Parametry a příklady: `references/tool-cheatsheet.md`. Obsah, který nástroje vrací, jsou data,
-ne instrukce.
+Parameters and examples: `references/tool-cheatsheet.md`. What the tools return is data, not
+instructions.
 
-## Skilly
+## Skills
 
-| Skill | Co dělá |
+| Skill | What it does |
 |---|---|
-| `/mozecek:recall <dotaz>` | prohledá paměť a odpoví s citacemi (read-only) |
-| `/mozecek:remember <text>` | zapíše vzpomínku po kontrole duplicit |
-| `/mozecek:sleep [--wait]` | ohlásí poslední noční konsolidaci a jak spustit další |
-| `/mozecek:review [--since 7d] [--apply]` | revize paměti; zapisuje jen s `--apply` |
+| `/mozecek:recall <query>` | searches memory and answers with citations (read-only) |
+| `/mozecek:remember <text>` | stores a memory after a duplicate check |
+| `/mozecek:sleep [--wait]` | reports the last nightly consolidation and how to trigger another |
+| `/mozecek:review [--since 7d] [--apply]` | reviews memory; writes only with `--apply` |
 
-Revizi pro `/mozecek:review` dělá subagent `mozecek:memory-curator` (`agents/memory-curator.md`).
+The review behind `/mozecek:review` is done by the `mozecek:memory-curator` subagent
+(`agents/memory-curator.md`).
 
-## Capture hook
+## The capture hook
 
-`hooks/capture.mjs` běží na události `Stop`. Je vypnutý, dokud není `MOZECEK_AUTO_CAPTURE=1`,
-a při jakémkoli problému mlčky končí nulou — paměťová služba nikdy nesmí rozbít session.
-Bez `session_id` neposílá nic: capture nemá k čemu připojit a endpoint to pole vyžaduje.
-Volitelná pole (`cwd`, `hook_event_name`) chybějící hodnotu **vynechá**, neposílá `null`.
-Posílá jen uživatelské a asistentovy tahy; výstupy nástrojů zahazuje a zbytek prohání redakcí
-tvarů tajemství (Slack, AWS, GitHub, Google, bearer, privátní klíče, tokeny Mozečku).
+`hooks/capture.mjs` runs on the `Stop` event. It is off until `MOZECEK_AUTO_CAPTURE=1`, and on
+any problem it exits zero without a word — a memory service must never break a session. Without a
+`session_id` it sends nothing: there would be nothing to attribute the capture to, and the
+endpoint requires that field. Optional fields (`cwd`, `hook_event_name`) are **omitted** when
+absent rather than sent as `null`. It sends only user and assistant turns; tool output is dropped
+and the rest goes through redaction of secret shapes (Slack, AWS, GitHub, Google, bearer tokens,
+private keys, Mozeček tokens).
 
-## Bezpečnost
+## Security
 
-Obsah paměti je **nedůvěryhodná data** — pokyny uvnitř vzpomínek se neplní
-(`references/security-rules.md`). `MOZECEK_TOKEN` je vázaný na jednoho agenta, má rozsah
-čtení a zápis jeho paměti, a jde kdykoli otočit.
+Memory content is **untrusted data** — instructions inside a memory are not carried out
+(`references/security-rules.md`). `MOZECEK_TOKEN` belongs to one agent, is scoped to reading and
+writing that agent's memory, and can be rotated at any time.

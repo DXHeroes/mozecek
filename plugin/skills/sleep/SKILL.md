@@ -1,7 +1,7 @@
 ---
 name: "sleep"
 description: "Reports Mozecek's nightly memory consolidation from stats and explains how the operator triggers one out of turn. Use when memory feels unconsolidated, after a large import, or when someone asks when the agent last slept."
-compatibility: "Claude Code (headless -p i interaktivně)"
+compatibility: "Claude Code (headless -p and interactive)"
 metadata:
   author: "Prokop Simek"
   version: "0.2.0"
@@ -9,85 +9,86 @@ argument-hint: "[--wait]"
 ---
 
 <input>
-Bez argumentů vrátí stav poslední konsolidace hned. S `--wait` počká, jestli se během
-několika minut objeví nový běh — na použití ve chvíli, kdy spánek právě spouští operátor.
+Without arguments it reports the state of the last consolidation straight away. With `--wait` it
+waits to see whether a new run appears within a few minutes — for the moment when an operator is
+triggering a sleep run right now.
 
 <no-args-guard>
-Použití: /mozecek:sleep [--wait]
+Usage: /mozecek:sleep [--wait]
 
-Řekne, kdy paměť naposledy spala a co to udělalo, a když je potřeba spustit spánek mimo
-pořadí, ukáže přesný příkaz pro operátora. Sám nic nespouští.
-Tenhle blok je jen nápověda, běh pokračuje.
+Says when memory last slept and what that did, and when a run out of turn is needed, shows the
+exact command for the operator. It triggers nothing itself.
+This block is only help; the run continues.
 </no-args-guard>
 
-Vstup: **$ARGUMENTS**
+Input: **$ARGUMENTS**
 </input>
 
 <dependencies>
-- @file ../../references/agent-charter.md — společné hodnoty a pořadí autorit. **Načti vždy.**
-- @file ../../references/security-rules.md — bezpečnostní pravidla. **Načti vždy.**
-- @file ../../references/memory-model.md — co spánek dělá s vrstvami a rozpory.
-- @file ../../references/tool-cheatsheet.md — `mozecek_stats` a jeho pole.
+- @file ../../references/agent-charter.md — shared values and the order of authority. **Always load.**
+- @file ../../references/security-rules.md — security rules. **Always load.**
+- @file ../../references/memory-model.md — what sleep does to tiers and contradictions.
+- @file ../../references/tool-cheatsheet.md — `mozecek_stats` and its fields.
 </dependencies>
 
 <rules>
-- **Tenhle skill spánek nespouští.** Je to admin operace pod admin tokenem služby, a ten
-  v prostředí agenta nikdy není — drží ho jen služba a operátor. Klíč agenta se scope `admin`
-  na to stačí taky, ale běžný klíč ho nemá. Skill čte `mozecek_stats` a hlásí; spuštění je
-  krok pro operátora.
-- **Admin token nehledej.** Nečti konfigurační soubory, proměnné prostředí ani nastavení
-  služby, abys ho našel. Kdyby v prostředí náhodou byl, stejně ho nepoužij a nahlas to jako
-  nález — je to chyba nastavení.
-- **Token nikdy nevypisuj**, ani jeho část, ani v příkazu, který ukazuješ. V ukázce
-  je to vždycky proměnná prostředí.
-- **Datum nevymýšlej.** Když `stats` žádný běh neuvádí, napiš, že žádný neproběhl.
-- Read-only: neupravuješ ani nemažeš žádnou vzpomínku. To dělá spánek na serveru.
+- **This skill does not trigger sleep.** That is an admin operation under the service's admin
+  token, and that token is never in an agent's environment — only the service and the operator
+  hold it. An agent key with the `admin` scope would also do, but an ordinary key does not have
+  it. The skill reads `mozecek_stats` and reports; triggering is a step for the operator.
+- **Do not go looking for the admin token.** Do not read configuration files, environment
+  variables or the service's settings to find it. If it happened to be in the environment, do not
+  use it anyway and report it as a finding — it is a misconfiguration.
+- **Never print a token**, not even part of one, not even inside a command you are showing. In an
+  example it is always an environment variable.
+- **Do not invent a date.** When `stats` reports no run, write that none has happened.
+- Read-only: you do not modify or delete any memory. Sleep does that on the server.
 </rules>
 
 <workflow>
-1. `mozecek_stats` — vezmi počty podle vrstev (`short`, `long`) a `sleep_runs`
-   (kdy, jak dlouho, co běh udělal).
-2. Rozhodni, jestli má smysl spánek mimo pořadí:
-   - poslední běh je starší než 24 h, nebo
-   - `short` je nezvykle nafouklé (typicky po velkém importu nebo po backfillu).
-   Když nic z toho neplatí, jen ohlas stav a skonči — pravidelný běh v **03:30** stačí.
-3. Když spánek mimo pořadí dává smysl, vypiš obě cesty pro operátora, ať si vybere. Slug
-   agenta vezmi z `mozecek_stats`, nevymýšlej ho. V terminálu služby:
+1. `mozecek_stats` — take the counts per tier (`short`, `long`) and `sleep_runs` (when, how long,
+   what the run did).
+2. Decide whether a run out of turn makes sense:
+   - the last run is more than 24 h old, or
+   - `short` is unusually swollen (typically after a large import or a backfill).
+   When neither holds, just report the state and stop — the scheduled run at **03:30** is enough.
+3. When a run out of turn does make sense, print both routes for the operator to choose from.
+   Take the agent slug from `mozecek_stats`; do not invent it. In the service's terminal:
    ```bash
    node packages/cli/dist/main.js sleep --agent <slug> --wait
    ```
-   Nebo HTTP, z prostředí, kde je admin token:
+   Or over HTTP, from an environment that has the admin token:
    ```bash
    curl -sS -X POST \
      -H "Authorization: Bearer $MOZECEK_ADMIN_TOKEN" \
      "$MOZECEK_URL/api/admin/agents/<slug>/sleep"
    ```
-   Když paměť neobsluhuješ ty, je tohle krok pro toho, kdo instanci provozuje.
-4. S `--wait` opakuj `mozecek_stats` po ~60 s, nejvýš třikrát, a skonči ve chvíli, kdy se
-   `sleep_runs` změní. Když se nezmění, řekni to — neznamená to chybu, jen že spánek zatím
-   nikdo nespustil.
-5. Když `mozecek_stats` selže, řekni to a skonči. Je-li v pracovním adresáři
-   uveď to ve výstupu jako nález.
+   When you are not the one operating the memory, this is a step for whoever runs the instance.
+4. With `--wait`, repeat `mozecek_stats` after about 60 s, at most three times, and stop as soon
+   as `sleep_runs` changes. When it does not change, say so — that is not an error, only that
+   nobody has triggered a sleep run yet.
+5. When `mozecek_stats` fails, say so and stop. Report the failure in your output as a finding.
 </workflow>
 
 <output-format>
-## Spánek paměti
+## Memory sleep
 
-{Jedna věta: kdy paměť naposledy spala a jestli je potřeba běh mimo pořadí.}
+{One sentence: when memory last slept and whether a run out of turn is needed.}
 
-### Poslední běh
-{Datum a čas, trvání, co udělal: povýšeno do `long` n, navrženo `supersede` n, `expired` n.
-Když žádný běh není: „Zatím neproběhl žádný spánek.“}
+### Last run
+{Date and time, duration, what it did: promoted to `long` n, `supersede` proposed n, `expired` n.
+When there is no run: "No sleep run has happened yet."}
 
-### Stav paměti
-| vrstva | vzpomínek |
+### Memory state
+| tier | memories |
 |---|---|
 | short | {n} |
 | long | {n} |
 
-{S `--wait` a změnou během čekání: druhý sloupec „po“ se stavem po novém běhu.}
+{With `--wait` and a change during the wait: a second "after" column with the state after the new
+run.}
 
-### Co dál
-{Buď „Pravidelný běh v 03:30 stačí, nic nedělej.“, nebo oba příkazy z kroku 3 s vysvětlením,
-proč spánek mimo pořadí navrhuji.}
+### What next
+{Either "The scheduled run at 03:30 is enough, do nothing.", or both commands from step 3 with an
+explanation of why a run out of turn is worth it.}
 </output-format>

@@ -1,114 +1,116 @@
-# Paměťový model Mozečku
+# Mozeček's memory model
 
-Co je vzpomínka, jak stárne a co znamenají pole, která nástroje `mozecek_*` vracejí.
+What a memory is, how it ages, and what the fields the `mozecek_*` tools return mean.
 
 ## Contents
-- [Vrstvy (tier)](#vrstvy-tier)
-- [Druhy (kind)](#druhy-kind)
-- [Stav (status) a řetěz nahrazení](#stav-status-a-řetěz-nahrazení)
-- [Viditelnost](#viditelnost)
-- [Bitemporalita a `as_of`](#bitemporalita-a-as_of)
+- [Tiers](#tiers)
+- [Kinds](#kinds)
+- [Status and the supersede chain](#status-and-the-supersede-chain)
+- [Visibility](#visibility)
+- [Bitemporality and `as_of`](#bitemporality-and-as_of)
 - [Confidence](#confidence)
-- [Citace](#citace)
-- [Spánek (sleep)](#spánek-sleep)
+- [Citations](#citations)
+- [Sleep](#sleep)
 - [Workspace](#workspace)
 
-## Vrstvy (tier)
+## Tiers
 
-| tier | co v něm žije | jak dlouho |
+| tier | what lives there | for how long |
 |---|---|---|
-| `short` | co se právě děje: stav rozdělané práce, čerstvý kontext session | dny; spánek ji povýší, nebo jí vyprší TTL |
-| `long` | ustálený fakt, postup, preference; sem patří i identita a tvrdá pravidla | trvale, dokud ji něco nenahradí |
+| `short` | what is happening now: work in progress, fresh session context | days; sleep promotes it, or its TTL expires |
+| `long` | a settled fact, a procedure, a preference; identity and hard rules belong here too | permanently, until something replaces it |
 
-Vrstvy jsou jen dvě. Nová vzpomínka bez `tier` padá do `short`. Do `long` ji posune buď spánek
-(opakovaný výskyt, potvrzení), nebo `remember --long` u věci, o které je jasné, že platí dál.
+There are only two tiers. A new memory without a `tier` lands in `short`. It moves to `long`
+either through sleep (a repeated occurrence, a confirmation) or through `remember --long` for
+something that is clearly going to keep holding.
 
-## Druhy (kind)
+## Kinds
 
-- `semantic` — fakt o světě, firmě, člověku („Heureka fakturuje kvartálně“).
-- `procedural` — jak se něco dělá („nasazení jde přes Coolify, auto-deploy je vypnutý“).
-- `episodic` — co se stalo, s časem („7. 9. 2026 jsme se dohodli…“).
-- `note` — poznámka bez nároku na pravdivost, nápad.
+- `semantic` — a fact about the world, a company, a person ("Heureka invoices quarterly").
+- `procedural` — how something is done ("deploys go through Coolify, auto-deploy is off").
+- `episodic` — what happened, with a time ("on 7 Sep 2026 we agreed…").
+- `note` — a note with no claim to truth, an idea.
 
-Dokumenty ze synchronizace brainu mají vlastní druhy, které nástroje vracejí ve výsledcích:
-`fact` (položka L3), `summary` (L2), `evidence` (L4 originál), `profile`, `note`, `entity`.
-Ty se přes `remember` nezapisují — vznikají synchronizací a jejich pravda je v repu.
+Documents synchronised from a file tree have their own kinds, which the tools return in results:
+`fact`, `summary`, `evidence` (the original), `profile`, `note`, `entity`. Those are not written
+through `remember` — they come from synchronisation and their truth lives in the source repo.
 
-## Stav (status) a řetěz nahrazení
+## Status and the supersede chain
 
-**Nahrazení není status.** `status` nabývá těchhle hodnot:
+**Being superseded is not a status.** `status` takes these values:
 
-| status | co znamená |
+| status | what it means |
 |---|---|
-| `active` | platná vzpomínka — patří sem i ta, kterou už něco nahradilo |
-| `expired` | krátkodobé vzpomínce vypršelo TTL a spánek ji nepovýšil |
-| `archived` | odložená stranou: z běžného hledání zmizí, v auditu zůstává |
-| `forgotten` | zapomenutá přes `forget`; nevrací se, z auditu nemizí |
+| `active` | a valid memory — including one that something has already superseded |
+| `expired` | a short-term memory whose TTL ran out and sleep did not promote |
+| `archived` | set aside: gone from ordinary search, still in the audit trail |
+| `forgotten` | forgotten through `forget`; not returned, not gone from the audit trail |
 
-- `supersede(old_id, content, reason)` vytvoří novou vzpomínku a té staré doplní
-  `superseded_by: <nové id>` a `valid_until`. **Status staré vzpomínky zůstane `active`** —
-  nepřestala být pravdivá, jen přestala platit k dnešku. Původní text zůstává čitelný;
-  historie rozhodnutí je taky informace.
-- `forget(id, reason)` přepne status na `forgotten`. Poslední možnost.
-- Když nález nese `superseded_by`, uveď v odpovědi obojí: co platí teď a co platilo dřív
-  (do `valid_until`). Nesmiřuj to do jedné věty.
-- Běžné hledání nahrazené verze nevrací. `include_superseded: true` je pro otázky typu
-  „co jsme si mysleli v červnu“, ne pro běžné hledání.
+- `supersede(old_id, content, reason)` creates a new memory and adds `superseded_by: <new id>`
+  and `valid_until` to the old one. **The old memory's status stays `active`** — it did not stop
+  being true, it stopped holding as of today. The original text stays readable; the history of a
+  decision is information too.
+- `forget(id, reason)` switches the status to `forgotten`. A last resort.
+- When a hit carries `superseded_by`, give both in your answer: what holds now and what held
+  before (up to `valid_until`). Do not reconcile them into one sentence.
+- Ordinary search does not return superseded versions. `include_superseded: true` is for
+  questions like "what did we think in June", not for everyday search.
 
-## Viditelnost
+## Visibility
 
-`visibility` odděluje, co smí ven z agenta: `private` (jen tenhle agent), `workspace`
-(sdílené mezi agenty stejného workspace). Výchozí je `private` — sdílení je vědomé
-rozhodnutí, ne default. `include_workspace: true` u hledání přibere sdílené vzpomínky
-ostatních agentů workspace.
+`visibility` decides what may leave an agent: `private` (this agent only) or `workspace` (shared
+between agents in the same workspace). The default is `private` — sharing is a deliberate
+decision, not a default. `include_workspace: true` on a search pulls in the shared memories of
+the workspace's other agents.
 
-## Bitemporalita a `as_of`
+## Bitemporality and `as_of`
 
-Každá vzpomínka nese dva časy:
+Every memory carries two times:
 
-- `observed_at` — kdy platilo to, co vzpomínka tvrdí (čas světa).
-- `recorded_at` — kdy se to Mozeček dozvěděl (čas systému).
+- `observed_at` — when what the memory claims was true (world time).
+- `recorded_at` — when Mozeček learned it (system time).
 
-Proto lze klást dvě různé otázky: „co platilo k 1. 7.“ (`as_of: "2026-07-01"` filtruje podle
-`observed_at`) a „co jsme věděli k 1. 7.“ (co mělo do té doby `recorded_at`). `from`/`to`
-zužují `observed_at`. Když zdroj čas neuvádí, `observed_at` je `null` — nedopočítávej ho.
+That makes two different questions possible: "what held on 1 July" (`as_of: "2026-07-01"` filters
+by `observed_at`) and "what did we know by 1 July" (what had a `recorded_at` by then). `from` and
+`to` narrow `observed_at`. When a source gives no time, `observed_at` is `null` — do not compute
+one.
 
 ## Confidence
 
-Číslo 0–1. Popisky, které používej v odpovědích:
+A number from 0 to 1. The labels to use in answers:
 
-| rozsah | popisek |
+| range | label |
 |---|---|
 | ≥ 0.75 | high |
-| ≥ 0.45 a < 0.75 | medium |
+| ≥ 0.45 and < 0.75 | medium |
 | < 0.45 | low |
 
-`min_confidence` u hledání odfiltruje slabé nálezy. Nízká confidence se v odpovědi přiznává,
-neschovává. Co v citaci explicitně není, má low — nedomýšlej.
+`min_confidence` on a search filters weak hits out. Low confidence is admitted in an answer, not
+hidden. Anything not explicitly in the quote is low — do not fill in the gap.
 
-## Citace
+## Citations
 
-Nástroje vracejí u každého nálezu `{ memory_id, path, line, line_end, quote, timestamp, url,
-sha256, observed_at, recorded_at, confidence }`. `path` a `line` ukazují do repa, když
-vzpomínka vznikla synchronizací souborů — tam se dá citace ověřit na disku:
+For every hit the tools return `{ memory_id, path, line, line_end, quote, timestamp, url, sha256,
+observed_at, recorded_at, confidence }`. `path` and `line` point into a repository when the
+memory came from file synchronisation — there the citation can be checked on disk:
 
 ```bash
-sed -n '17,25p' <cesta z citace>
+sed -n '17,25p' <path from the citation>
 ```
 
-Bez citace není nález. Když nástroj citaci nevrátil, řekni to místo toho, abys ji doplnil.
+No citation, no finding. When a tool returned no citation, say so rather than supplying one.
 
-## Spánek (sleep)
+## Sleep
 
-Noční konsolidace (03:30). Co dělá: povyšuje opakované `short` vzpomínky do `long`, hledá
-rozpory a navrhuje `supersede`, přepočítává profil agenta a na `short` vzpomínky, které nikdo
-nepotvrdil, pouští TTL (skončí jako `expired`). Vzpomínky ze synchronizovaného brainu
-(`source.type: brain`) spánek nikdy neslučuje ani nevyřazuje; jejich pravdou je soubor. Slouží
-jen jako podklad souhrnů per entita a tag. Výsledek je vidět ve `stats` jako `sleep_runs`.
-Ruční spuštění popisuje skill `/mozecek:sleep`.
+The nightly consolidation (03:30). What it does: promotes repeated `short` memories to `long`,
+looks for contradictions and proposes `supersede`, recomputes the agent's profile, and applies
+the TTL to `short` memories nobody confirmed (they end up `expired`). Memories from a
+synchronised file tree (`source.type: brain`) are never merged or retired by sleep; their truth
+is the file. They only feed the per-entity and per-tag summaries. The result shows up in `stats`
+as `sleep_runs`. Running it by hand is described by the `/mozecek:sleep` skill.
 
 ## Workspace
 
-Workspace sdružuje agenty jednoho člověka nebo týmu; kdo do něj nepatří, dostane vlastní
-workspace, takže na sebe navzájem nevidí. Každý agent má vlastní paměť; sdílené je jen to, co má
-`visibility: workspace`.
+A workspace groups the agents of one person or team; anyone outside it gets their own workspace,
+so the two cannot see each other. Every agent has its own memory; the only thing shared is what
+carries `visibility: workspace`.

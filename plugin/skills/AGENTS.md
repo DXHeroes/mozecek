@@ -1,11 +1,11 @@
-# Katalog skillů pluginu `mozecek`
+# Catalogue of the `mozecek` plugin's skills
 
-Každý skill v tomhle adresáři má právě jeden řádek níž, a každý řádek má složku. Když jeden
-z těch dvou seznamů přestane odpovídat druhému, je to chyba.
+Every skill in this directory has exactly one row below, and every row has a folder. When one of
+those two lists stops matching the other, that is a bug.
 
-| Skill | Složka | Popis |
+| Skill | Folder | Description |
 |---|---|---|
-| `/mozecek:remember` | `remember/` | Zápis jedné vzpomínky po kontrole duplicit; při shodě `update` nebo `supersede` |
-| `/mozecek:recall` | `recall/` | Hledání v paměti s citacemi, nahrazenými verzemi a přiznanými mezerami; read-only |
-| `/mozecek:sleep` | `sleep/` | Report noční konsolidace ze `stats` a příkaz pro operátora, když je potřeba běh mimo pořadí |
-| `/mozecek:review` | `review/` | Revize čerstvé paměti: duplicity, rozpory, slabě doložené položky; zapisuje jen s `--apply` |
+| `/mozecek:remember` | `remember/` | Stores one memory after a duplicate check; on a match, `update` or `supersede` instead |
+| `/mozecek:recall` | `recall/` | Searches memory and answers with citations, superseded versions and admitted gaps; read-only |
+| `/mozecek:sleep` | `sleep/` | Reports the nightly consolidation from `stats`, and the command for an operator when a run out of turn is needed |
+| `/mozecek:review` | `review/` | Reviews recent memory: duplicates, contradictions, thinly evidenced rows; writes only with `--apply` |

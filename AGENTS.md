@@ -1,17 +1,19 @@
-# Pravidla pro agenty
+# Rules for agents
 
-Tenhle repozitář je veřejný a obsahuje dvě věci: plugin pro Claude Code (`plugin/`) a návod
-na self-host (`README.md`, `compose.yml`). Služba samotná tady není.
+This repository is public and holds two things: the Claude Code plugin (`plugin/`) and
+instructions for self-hosting (`README.md`, `compose.yml`). The service itself is not here.
 
-- **Nic o konkrétním nasazení.** Žádná adresa instance, žádný slug agenta, žádné jméno klienta
-  v kódu ani v příkladech. Příklady používají `mozecek.example.com` a `<agent>`.
-- **Žádná výchozí adresa.** `plugin/.mcp.json` a `plugin/hooks/capture.mjs` nesmějí nést
-  fallback URL. Bez `MOZECEK_URL` se plugin nepřipojí, a to je správně.
-- **Verzi zvedej.** `plugin/.claude-plugin/plugin.json` — marketplace ho servíruje doslova
-  a Claude Code drží plugin v cache podle verze.
-- Konvence pro skilly a subagenty jsou v [`plugin/AGENTS.md`](plugin/AGENTS.md).
+- **Nothing about one particular deployment.** No instance address, no agent slug, no client name
+  in the code or in the examples. Examples use `mozecek.example.com` and `<agent>`.
+- **No default address.** `plugin/.mcp.json` and `plugin/hooks/capture.mjs` must not carry a
+  fallback URL. Without `MOZECEK_URL` the plugin does not connect, and that is correct.
+- **Bump the version.** `plugin/.claude-plugin/plugin.json` — the marketplace serves that file
+  verbatim and Claude Code caches the plugin by version.
+- **English only.** This repository is public, so everything in it — README, descriptions, skills,
+  references, comments — is written in English.
+- Conventions for skills and subagents are in [`plugin/AGENTS.md`](plugin/AGENTS.md).
 
-## Ověření
+## Checks
 
 ```bash
 claude plugin validate ./plugin

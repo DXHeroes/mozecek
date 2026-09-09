@@ -4,12 +4,12 @@
     "name": "DX Heroes",
     "email": "prokop.simek@dxheroes.io"
   },
-  "description": "Mozeček — paměť pro agenty: MCP nástroje, capture hook a skilly pro práci s pamětí.",
+  "description": "Mozeček — memory for agents: MCP tools, a session capture hook and skills for working with memory.",
   "plugins": [
     {
       "name": "mozecek",
       "source": "./plugin",
-      "description": "Mozeček — paměť pro agenta: MCP nástroje (search, list, remember, recall, timeline, ask), Stop hook, který ukládá dokončené sessions, a skilly nad nimi.",
+      "description": "Mozeček — memory for an agent: MCP tools (search, list, remember, recall, timeline, ask), a Stop hook that stores finished sessions, and skills on top of them.",
       "category": "productivity"
     }
   ]
