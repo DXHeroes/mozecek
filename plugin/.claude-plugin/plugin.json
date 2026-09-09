@@ -1,6 +1,6 @@
 {
   "name": "mozecek",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Mozeček — agent memory: MCP tools (search, list, remember, recall, timeline, ask), session capture hook and memory skills.",
   "author": {
     "name": "Prokop Simek",
@@ -15,14 +15,12 @@
     "url": {
       "type": "string",
       "title": "Instance address",
-      "description": "Base address of your Mozeček instance, no trailing slash. There is no default: a plugin carrying its publisher's address would send every install that forgot this there.",
-      "required": true
+      "description": "Base address of your Mozeček instance, no trailing slash. There is no default: a plugin carrying its publisher's address would send every install that forgot this there. Leave empty to configure it through MOZECEK_URL instead."
     },
     "token": {
       "type": "string",
       "title": "Agent key",
-      "description": "The mz_… key issued for this agent. Stored in the OS keychain, never in settings.json.",
-      "required": true,
+      "description": "The mz_… key issued for this agent. Stored in the OS keychain, never in settings.json. Leave empty to configure it through MOZECEK_TOKEN instead.",
       "sensitive": true
     },
     "auto_capture": {
