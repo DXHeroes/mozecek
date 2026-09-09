@@ -1,6 +1,7 @@
 ---
 name: "review"
 description: "Reviews recent Mozecek memory for duplicates, contradictions and low-confidence rows and proposes supersede or forget with reasons, applying them only on request. Use when memory quality is in question or before relying on it for an important decision."
+license: "Apache-2.0"
 compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"

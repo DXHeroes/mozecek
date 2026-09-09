@@ -16,6 +16,11 @@ not here.
 - **Bump the version.** Both `plugin/plugin.json` and `plugin/.claude-plugin/plugin.json`, and
   keep them equal. The marketplace serves the second file verbatim and Claude Code caches the
   plugin by version, so an unbumped release leaves installed users on the old files.
+- **Apache-2.0, and it stops at this repository.** `LICENSE` covers the plugin, the manifests,
+  `compose.yml` and the docs — not the closed service source and not the
+  `ghcr.io/dxheroes/mozecek` image. `license` appears in both plugin manifests and in every
+  skill's frontmatter, and moves together the way `version` does; a skill is copied into a client
+  on its own, so it carries its terms with it. `plugin/skills/references.test.mjs` enforces it.
 - **No `required` option.** Claude Code does not prompt for plugin options on install
   (anthropics/claude-code#39455, #39827, both closed as not planned), so `required` can never
   fill a value — it can only block the plugin. The environment is the primary route for headless

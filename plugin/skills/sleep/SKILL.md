@@ -1,6 +1,7 @@
 ---
 name: "sleep"
 description: "Reports Mozecek's nightly memory consolidation from stats and explains how the operator triggers one out of turn. Use when memory feels unconsolidated, after a large import, or when someone asks when the agent last slept."
+license: "Apache-2.0"
 compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"

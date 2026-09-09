@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "mozecek",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Mozeček — agent memory: MCP tools (search, list, remember, recall, timeline, ask), session capture and memory skills.",
   "author": {
     "name": "Prokop Simek",
@@ -9,6 +9,7 @@
   },
   "homepage": "https://github.com/DXHeroes/mozecek",
   "repository": "https://github.com/DXHeroes/mozecek",
+  "license": "Apache-2.0",
   "keywords": ["memory", "mcp", "second-brain", "agent-memory", "citations"],
   "extensions": {
     "com.anthropic.claude-code": {

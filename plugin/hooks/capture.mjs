@@ -39,7 +39,7 @@
 // grew by one tool call that never leaves the machine. It is therefore not a checksum of
 // transcript_path and must never be used to verify that file.
 //
-// Env: MOZECEK_TOKEN (required), MOZECEK_URL (default the hosted service), MOZECEK_AGENT
+// Env: MOZECEK_TOKEN (required), MOZECEK_URL (required, no default), MOZECEK_AGENT
 //      (default: the slug inside the token), MOZECEK_AUTO_CAPTURE, MOZECEK_CAPTURE_MAX_KB
 //      (default 256), MOZECEK_DEBUG. Each MOZECEK_X above also reads CLAUDE_PLUGIN_OPTION_X.
 import { createHash } from 'node:crypto';

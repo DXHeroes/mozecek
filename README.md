@@ -107,4 +107,11 @@ proxy logs, in browser history and in the `Referer` header.
 
 ## Licence
 
-The service source is closed. The plugin in this repository may be modified for your own use.
+Everything in this repository — the plugin, the manifests, `compose.yml` and the documentation —
+is under the [Apache License 2.0](LICENSE). That matches how it travels: installing the plugin
+copies this repository, and a skill is copied again into whichever client loads it, so the terms
+have to permit redistribution. Each skill repeats them in its own frontmatter for the same reason.
+
+Two things are outside it. The **service source is closed** and is not in this repository. The
+**`ghcr.io/dxheroes/mozecek` image** is built from that source and published separately; this
+licence says nothing about it either way.

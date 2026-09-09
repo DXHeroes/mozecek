@@ -1,11 +1,12 @@
 {
   "name": "mozecek",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Mozeček — agent memory: MCP tools (search, list, remember, recall, timeline, ask), session capture hook and memory skills.",
   "author": {
     "name": "Prokop Simek",
     "email": "prokop.simek@dxheroes.io"
   },
+  "license": "Apache-2.0",
   "keywords": [
     "memory",
     "mcp",

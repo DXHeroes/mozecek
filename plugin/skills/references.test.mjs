@@ -92,5 +92,10 @@ test('frontmatter carries the two fields every client needs, and name matches th
     const description = front.match(/^description:\s*"?([\s\S]*?)"?\s*$/m)?.[1];
     assert.ok(description && description.length > 0, `${skill}: description is required`);
     assert.ok(description.length <= 1024, `${skill}: description exceeds 1024 characters`);
+
+    // A skill is copied into a client on its own, away from the repository and its LICENSE, so
+    // the terms have to travel in the file itself.
+    const license = front.match(/^license:\s*"?([^"\n]+)"?/m)?.[1]?.trim();
+    assert.equal(license, 'Apache-2.0', `${skill}: must declare the repository's licence`);
   }
 });

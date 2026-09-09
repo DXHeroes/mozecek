@@ -1,6 +1,7 @@
 ---
 name: "recall"
 description: "Searches the agent's Mozecek memory and answers with citations, superseded versions and an honest account of where it looked. Use when someone asks what the agent remembers about a topic, person or decision."
+license: "Apache-2.0"
 compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"

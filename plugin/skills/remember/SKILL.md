@@ -1,6 +1,7 @@
 ---
 name: "remember"
 description: "Stores one fact in the agent's Mozecek memory after checking for near-duplicates, preferring update or supersede when the memory already knows something similar. Use when the owner says to remember something or a run produces a fact worth keeping."
+license: "Apache-2.0"
 compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"
