@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "mozecek",
+  "version": "0.4.0",
+  "description": "Mozeček — agent memory: MCP tools (search, list, remember, recall, timeline, ask), session capture and memory skills.",
+  "author": {
+    "name": "Prokop Simek",
+    "email": "prokop.simek@dxheroes.io"
+  },
+  "homepage": "https://github.com/DXHeroes/mozecek",
+  "repository": "https://github.com/DXHeroes/mozecek",
+  "keywords": ["memory", "mcp", "second-brain", "agent-memory", "citations"],
+  "extensions": {
+    "com.anthropic.claude-code": {
+      "manifest": ".claude-plugin/plugin.json",
+      "note": "Claude Code reads .claude-plugin/plugin.json, .mcp.json, hooks/ and agents/. Those paths stay where that client expects them; this file is the portable manifest."
+    }
+  }
+}

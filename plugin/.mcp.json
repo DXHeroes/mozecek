@@ -1,11 +1,9 @@
 {
   "mcpServers": {
     "mozecek": {
-      "type": "http",
-      "url": "${MOZECEK_URL}/mcp",
-      "headers": {
-        "Authorization": "Bearer ${MOZECEK_TOKEN}"
-      }
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/mcp-proxy.mjs"]
     }
   }
 }

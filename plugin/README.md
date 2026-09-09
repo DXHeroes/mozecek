@@ -17,7 +17,10 @@ claude plugin marketplace add DXHeroes/mozecek   # once; or a path to a local ch
 /plugin install mozecek@mozecek                  # inside claude
 ```
 
-Configuration comes from the environment. Interactive `claude` reads variables only from the
+In any other [Agent Plugins](https://agent-plugins.org) client, install this directory the way
+that client documents — the portable manifest is `plugin.json` and the MCP server is `mcp.json`.
+
+The quickest configuration is the environment. Interactive `claude` reads variables only from the
 shell environment, so put them in `~/.zshrc`:
 
 ```bash
@@ -27,12 +30,13 @@ export MOZECEK_AUTO_CAPTURE=1                      # optional: store finished se
 ```
 
 Or the same as an `env` block in `~/.claude/settings.json`, which Claude Code passes to both the
-plugin and the hook.
+plugin and the hook. To keep the key out of a configuration file altogether, use the plugin's
+options instead — see [Environment variables](#environment-variables) for all three sources.
 
 **Checking it worked.** `/mcp` lists the server `mozecek` as Connected, `/plugin` lists the plugin
 `mozecek`. A first question: `/mozecek:recall why did we move to Attio`.
 
-The **Připojení** page in the Mozeček UI (`/ui/connect`) prints these steps with the real address
+The **Connect** page in the Mozeček UI (`/ui/connect`) prints these steps with the real address
 and key filled in and a copy button, including variants for Cursor and other MCP clients.
 
 ## Without the plugin
@@ -63,23 +67,56 @@ the plugin in `.claude/settings.json` and takes the variables from the applicati
 
 The values belong in a shell profile, in an agent's env file, or in an application's variables.
 
-An interactive install can hold them as plugin options (`/plugin configure mozecek`); the hook
-then reads them from `CLAUDE_PLUGIN_OPTION_TOKEN`, `_URL` and `_AUTO_CAPTURE`. An environment
-variable wins over a plugin option, so a single run can override an installed value.
+Three sources, in the order the plugin looks:
+
+1. **The environment** — `MOZECEK_URL`, `MOZECEK_TOKEN`. Works in every client that passes its
+   environment to a subprocess.
+2. **The plugin's own options** — in Claude Code, `/plugin` → the plugin → **Configure options**.
+   A value marked sensitive goes to the OS keychain, never to `settings.json`. They arrive as
+   `CLAUDE_PLUGIN_OPTION_URL`, `_TOKEN` and `_AUTO_CAPTURE`.
+3. **`$PLUGIN_DATA/credentials.json`** — `{"url": …, "token": …}`. Agent Plugins guarantees that
+   directory is writable and survives plugin updates, so this is the route for a client that
+   offers neither of the above. The MCP server reads it; the Claude Code capture hook does not,
+   because Claude Code supplies the two sources above instead.
+
+An earlier source wins, so a single run can override an installed value.
 
 **There is no default address.** Without `MOZECEK_URL` the MCP server does not connect and the
 capture hook stays quiet. That is deliberate: a plugin carrying its publisher's address would
 send every install that forgot the variable there.
 
-**Trailing slash in `MOZECEK_URL`.** `capture.mjs` strips one itself, but `.mcp.json` builds the
-MCP server's address by expanding the variable (`${MOZECEK_URL}/mcp`), and expansion cannot edit
-anything. `https://mozecek.example.com/` would therefore produce `//mcp`. Always write the
-variable without a trailing slash.
+**Trailing slash in `MOZECEK_URL`.** Tolerated: `bin/mcp-proxy.mjs` and `capture.mjs` both strip
+one before building a path. Write it without anyway — the address also ends up in a client's own
+configuration, where nothing strips it.
 
 **Interactive `claude` versus a headless run.** A scheduled run loads its environment from the
 agent's env file. Interactive `claude` started from a terminal does not read that file — the hook
 and the MCP server see only the shell environment. For capture and memory to work there too,
 export `MOZECEK_*` in your shell profile.
+
+## Layout
+
+The directory serves the portable Agent Plugins format and Claude Code at once, because Claude
+Code is not an Agent Plugins client yet and reads different paths:
+
+```
+plugin/
+├── plugin.json                 portable manifest
+├── mcp.json                    portable MCP server  (${PLUGIN_ROOT})
+├── bin/mcp-proxy.mjs           the MCP server itself: stdio in, Streamable HTTP out
+├── skills/<name>/SKILL.md      shared by every client
+│   └── references/             bundled per skill; Agent Skills cannot reach above a skill
+├── references/                 the source those copies are generated from
+├── .claude-plugin/plugin.json  Claude Code manifest, plus its userConfig options
+├── .mcp.json                   Claude Code MCP server  (${CLAUDE_PLUGIN_ROOT})
+├── hooks/                      Claude Code only: the Stop capture hook
+└── agents/                     Claude Code only: the memory-curator subagent
+```
+
+`bin/mcp-proxy.mjs` has no dependencies and needs only Node. It exists because Agent Plugins
+keeps credentials out of package data: configured headers must be literal and free of secrets,
+and placeholder expansion never reaches a remote URL or a header. A portable `mcp.json` therefore
+cannot carry a per-user address or a key, but a stdio server can be handed both at run time.
 
 ## The `mozecek_*` tools
 

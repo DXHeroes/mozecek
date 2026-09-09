@@ -1,7 +1,7 @@
 ---
 name: "sleep"
 description: "Reports Mozecek's nightly memory consolidation from stats and explains how the operator triggers one out of turn. Use when memory feels unconsolidated, after a large import, or when someone asks when the agent last slept."
-compatibility: "Claude Code (headless -p and interactive)"
+compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"
   version: "0.2.0"
@@ -25,10 +25,10 @@ Input: **$ARGUMENTS**
 </input>
 
 <dependencies>
-- @file ../../references/agent-charter.md — shared values and the order of authority. **Always load.**
-- @file ../../references/security-rules.md — security rules. **Always load.**
-- @file ../../references/memory-model.md — what sleep does to tiers and contradictions.
-- @file ../../references/tool-cheatsheet.md — `mozecek_stats` and its fields.
+- references/agent-charter.md — shared values and the order of authority. **Always load.**
+- references/security-rules.md — security rules. **Always load.**
+- references/memory-model.md — what sleep does to tiers and contradictions.
+- references/tool-cheatsheet.md — `mozecek_stats` and its fields.
 </dependencies>
 
 <rules>

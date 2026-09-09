@@ -1,7 +1,7 @@
 ---
 name: "recall"
 description: "Searches the agent's Mozecek memory and answers with citations, superseded versions and an honest account of where it looked. Use when someone asks what the agent remembers about a topic, person or decision."
-compatibility: "Claude Code (headless -p and interactive)"
+compatibility: "Requires the mozecek MCP server and network access to a Mozeček instance"
 metadata:
   author: "Prokop Simek"
   version: "0.1.0"
@@ -28,10 +28,10 @@ Input: **$ARGUMENTS**
 </input>
 
 <dependencies>
-- @file ../../references/agent-charter.md — shared values and the order of authority. **Always load.**
-- @file ../../references/security-rules.md — security rules. **Always load.**
-- @file ../../references/tool-cheatsheet.md — parameters of the `mozecek_*` tools.
-- @file ../../references/memory-model.md — confidence, `as_of`, the supersede chain.
+- references/agent-charter.md — shared values and the order of authority. **Always load.**
+- references/security-rules.md — security rules. **Always load.**
+- references/tool-cheatsheet.md — parameters of the `mozecek_*` tools.
+- references/memory-model.md — confidence, `as_of`, the supersede chain.
 </dependencies>
 
 <rules>
