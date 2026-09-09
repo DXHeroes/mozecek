@@ -1,0 +1,14 @@
+{
+  "name": "mozecek",
+  "version": "0.2.0",
+  "description": "Mozeček — agent memory: MCP tools (search, list, remember, recall, timeline, ask), session capture hook and memory skills.",
+  "author": {
+    "name": "Prokop Simek",
+    "email": "prokop.simek@dxheroes.io"
+  },
+  "keywords": [
+    "memory",
+    "mcp",
+    "second-brain"
+  ]
+}

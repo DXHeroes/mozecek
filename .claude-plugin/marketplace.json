@@ -1,0 +1,16 @@
+{
+  "name": "mozecek",
+  "owner": {
+    "name": "DX Heroes",
+    "email": "prokop.simek@dxheroes.io"
+  },
+  "description": "Mozeček — paměť pro agenty: MCP nástroje, capture hook a skilly pro práci s pamětí.",
+  "plugins": [
+    {
+      "name": "mozecek",
+      "source": "./plugin",
+      "description": "Mozeček — paměť pro agenta: MCP nástroje (search, list, remember, recall, timeline, ask), Stop hook, který ukládá dokončené sessions, a skilly nad nimi.",
+      "category": "productivity"
+    }
+  ]
+}

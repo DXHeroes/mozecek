@@ -1,0 +1,17 @@
+{
+  "description": "Mozecek hooks — session capture into the agent's memory (runs only with MOZECEK_AUTO_CAPTURE=1 and a configured MOZECEK_URL/MOZECEK_TOKEN)",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/capture.mjs\"",
+            "async": true,
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

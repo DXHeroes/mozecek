@@ -1,0 +1,46 @@
+# Mozeček, free edition: the published image plus a Postgres with pgvector.
+#
+# The image is built from the service repository and published to GHCR; nothing here builds from
+# source. `docker compose up -d`, then open http://127.0.0.1:3000/ui and sign in with
+# MOZECEK_ADMIN_TOKEN.
+#
+# The free edition allows ten agents on one instance. Everything else — memory, search, sleep,
+# the MCP endpoint — is unlimited.
+
+name: mozecek
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mozecek
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d mozecek']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/dxheroes/mozecek:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3000:3000'
+    environment:
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?}@db:5432/mozecek
+      MOZECEK_PUBLIC_URL: ${MOZECEK_PUBLIC_URL:-http://127.0.0.1:3000}
+      MOZECEK_ADMIN_TOKEN: ${MOZECEK_ADMIN_TOKEN:?set MOZECEK_ADMIN_TOKEN in .env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MOZECEK_PROVIDER: ${MOZECEK_PROVIDER:-gemini}
+      MOZECEK_LOG_LEVEL: ${MOZECEK_LOG_LEVEL:-info}
+      TZ: ${TZ:-Europe/Prague}
+
+volumes:
+  pgdata:

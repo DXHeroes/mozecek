@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mozecek": {
+      "type": "http",
+      "url": "${MOZECEK_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MOZECEK_TOKEN}"
+      }
+    }
+  }
+}
