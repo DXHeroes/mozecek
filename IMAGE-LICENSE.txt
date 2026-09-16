@@ -1,0 +1,26 @@
+Mozecek Community Edition License 1.0
+Copyright 2026 DX Heroes. All rights reserved.
+
+Permission is granted, free of charge, to download and run the official Mozecek
+Community Edition container image for personal use and for your organization's
+internal business purposes, with at most ten agents per instance. You may keep
+backups and copies in private registries used only by your organization.
+
+This permission does not include public redistribution, sublicensing, resale,
+or offering Mozecek to third parties as a hosted or managed service. Those uses
+require a separate written agreement with DX Heroes. The service source code
+is proprietary and is not licensed for redistribution under these terms.
+
+Do not remove the product's license notices or circumvent its edition limits.
+Nothing in this license restricts rights that cannot lawfully be excluded.
+Third-party components retain their respective licenses and rights; their
+license notices are distributed with the image. The separately distributed
+Mozecek agent plugin and self-hosting documentation are licensed independently.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. TO THE EXTENT PERMITTED BY LAW, THE AUTHORS AND COPYRIGHT
+HOLDERS ARE NOT LIABLE FOR CLAIMS, DAMAGES OR OTHER LIABILITY ARISING FROM
+THE SOFTWARE OR ITS USE.
+
+For additional permissions: prokop.simek@dxheroes.io

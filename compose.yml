@@ -26,8 +26,16 @@ services:
       retries: 10
 
   api:
-    image: ghcr.io/dxheroes/mozecek:latest
+    image: ghcr.io/dxheroes/mozecek:0.1.0
     restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
