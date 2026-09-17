@@ -26,7 +26,7 @@ services:
       retries: 10
 
   api:
-    image: ghcr.io/dxheroes/mozecek:0.1.0
+    image: ghcr.io/dxheroes/mozecek:0.1.0@sha256:975b09687a302574aad54801767a2e1bd560ee99f2dcb7fe9c1eb35a4a5c0fec
     restart: unless-stopped
     init: true
     read_only: true
