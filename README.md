@@ -89,8 +89,12 @@ up; `/healthz` and `/readyz` answer the same question for a machine.
 
 The `ghcr.io/dxheroes/mozecek` image is the free edition. The ceiling applies **only to creating
 an eleventh agent** — existing agents keep working, and reading and writing memory are never
-limited. The enterprise code is not present in the free image at all, so the ceiling cannot be
-lifted from inside the container: it is a different build, not a different switch.
+limited. Enterprise code is absent from the CE image. The enterprise image is distributed
+separately as `ghcr.io/dxheroes/mozecek-ee` and requires authorized registry access.
+
+CE is proprietary software, free for personal and internal business self-hosting. Your own
+backups and internal registry copies are permitted. Public redistribution and offering Mozeček
+as a hosted service require a separate agreement; see [the image licence](IMAGE-LICENSE.txt).
 
 For the enterprise edition, write to
 [prokop.simek@dxheroes.io](mailto:prokop.simek@dxheroes.io).
@@ -105,13 +109,50 @@ A key belongs to one agent and is scoped to reading and writing that agent's mem
 per client so it can be revoked on its own. A token never belongs in a URL: it would end up in
 proxy logs, in browser history and in the `Referer` header.
 
+## Container releases
+
+Both editions support Linux AMD64 and ARM64. The Compose file pins a tested release; `latest`
+is also available for users who intentionally follow new releases. Release images run as a
+non-root user and contain minified application JavaScript, runtime dependencies, UI assets,
+migrations and licence notices. They contain no original application TypeScript, source maps,
+development toolchain or build credentials. Runtime secrets are supplied by the operator.
+
+A downloadable image can be inspected and modified. Minification and separate builds reduce
+accidental disclosure; they do not prevent reverse engineering or modification of edition limits.
+
+Verify the CE release using [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/)
+and the public key from this repository before starting it:
+
+```bash
+cosign verify --key cosign.pub ghcr.io/dxheroes/mozecek:0.1.0
+docker compose pull
+docker compose up -d
+```
+
+Verification checks the publisher's signature; the image digest pins the exact content.
+SBOM and build provenance attestations accompany the multi-platform image. Release candidates
+and build caches are private, and each published platform passes runtime, layer-content,
+vulnerability and secret checks before promotion.
+
+The runtime has no shell. Operator commands execute Node directly:
+
+```bash
+docker compose exec api /nodejs/bin/node packages/cli/dist/main.js --help
+```
+
+Before upgrading, back up PostgreSQL and keep the previous image digest. Update the pinned
+release from this repository, verify its signature, then run `docker compose pull` and
+`docker compose up -d`. Check `/readyz` and the service logs. An image rollback is safe only if
+the database schema remains compatible; otherwise restore the matching database backup too.
+
 ## Licence
 
-Everything in this repository — the plugin, the manifests, `compose.yml` and the documentation —
-is under the [Apache License 2.0](LICENSE). That matches how it travels: installing the plugin
+The plugin, its manifests, `compose.yml` and the documentation in this repository
+are under the [Apache License 2.0](LICENSE). That matches how it travels: installing the plugin
 copies this repository, and a skill is copied again into whichever client loads it, so the terms
 have to permit redistribution. Each skill repeats them in its own frontmatter for the same reason.
 
 Two things are outside it. The **service source is closed** and is not in this repository. The
-**`ghcr.io/dxheroes/mozecek` image** is built from that source and published separately; this
-licence says nothing about it either way.
+**`ghcr.io/dxheroes/mozecek` image** is built from that source and published separately under
+the [Mozecek Community Edition License](IMAGE-LICENSE.txt), reproduced here for image users.
+The Apache licence does not apply to the service source or either service image.
