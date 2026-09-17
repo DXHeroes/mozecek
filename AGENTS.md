@@ -47,6 +47,14 @@ Agent Skills resolves file references from the skill root, and `../` is not port
 under `skills/<name>/references/` are generated from `references/`, which stays the single source
 of truth — `plugin/skills/references.test.mjs` fails if they drift.
 
+## File size
+
+The company standard (`dxh:code-standards`) caps a file at 500 lines and enforces it with Biome.
+This repo **deliberately carries no Biome config**: it is a plugin, it has no `package.json` and no
+toolchain to hang a linter on, and the five `.mjs` files it does have are all well under the limit
+(the largest, `plugin/hooks/capture.test.mjs`, is 438 lines). If a file here crosses 500, the fix is
+to adopt the standard's `biome.json` rather than to keep growing the file.
+
 ## Checks
 
 ```bash
