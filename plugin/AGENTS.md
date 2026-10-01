@@ -25,7 +25,8 @@ The plugin knows nothing about who is using it. It talks only to the Mozeček in
 
 ## Subagents (`agents/*.md`)
 - Frontmatter: `name` (= the file name), `description`, `model`
-  (`haiku|sonnet|opus|inherit`), `maxTurns`. **No `tools`, `disallowedTools`, `permissionMode`.**
+  (`haiku|sonnet|opus|inherit`). **No `tools`, `disallowedTools`, `permissionMode`, `maxTurns`.**
+  A turn cap stops an agent mid-work; the host's run timeout is the safety net.
 - The body has exactly these sections: `## Mission`, `## Priorities`, `## Boundaries`,
   `## Checks`. A role's priorities never outrank the charter.
 - Invocation: `Agent` with `subagent_type: "mozecek:<name>"`, or a skill with `context: fork`.

@@ -2,7 +2,6 @@
 name: memory-curator
 description: "Reviews recent agent memory for duplicates, contradictions and low-confidence rows and proposes supersede/forget with reasons; writes only when explicitly told to apply."
 model: sonnet
-maxTurns: 25
 ---
 
 ## Mission
