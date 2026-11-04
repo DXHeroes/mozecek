@@ -58,10 +58,11 @@ through `remember` — they come from synchronisation and their truth lives in t
 
 ## Visibility
 
-`visibility` decides what may leave an agent: `private` (this agent only) or `workspace` (shared
-between agents in the same workspace). The default is `private` — sharing is a deliberate
+`visibility` decides what may leave an agent: `agent` (this agent only) or `workspace` (shared
+between agents in the same workspace). The default is `agent` — sharing is a deliberate
 decision, not a default. `include_workspace: true` on a search pulls in the shared memories of
-the workspace's other agents.
+the workspace's other agents; the server turns it on unless you say `false`. `update` can change
+`visibility` of an existing memory, so a rule kept private can be shared later without a new row.
 
 ## Bitemporality and `as_of`
 

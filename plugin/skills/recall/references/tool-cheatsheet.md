@@ -102,10 +102,24 @@ Writes a new memory.
 { "content": "Acme is invoiced quarterly in advance.", "kind": "semantic", "tier": "long",
   "title": "Acme billing cycle", "tags": ["billing"], "entities": ["acme-corp"],
   "zone": "sales", "importance": 0.7, "confidence": 0.8,
-  "observed_at": "2026-09-07", "visibility": "private", "source": "meeting 2026-09-07" }
+  "observed_at": "2026-09-07T00:00:00Z", "visibility": "agent",
+  "source": { "type": "mcp", "meeting_id": "2026-09-07-acme" } }
+```
+
+A rule that every agent working on the same repository should follow, shared with the workspace:
+
+```json
+{ "content": "Releases of this repository are cut on Thursdays.", "kind": "procedural",
+  "tags": ["release", "owner-repo"], "visibility": "workspace",
+  "source": { "type": "mcp", "url": "https://github.com/owner/repo/pull/12#issuecomment-1" } }
 ```
 
 - `content` is the only required field. Without a `tier` the memory goes to `short`.
+- `visibility` is `agent` (the default, this agent only) or `workspace` (every agent in the
+  workspace). Nothing else is accepted.
+- `source` is an object with a `type` (`mcp` for a write from a skill) and optionally `url`,
+  `meeting_id`, `quote`. `observed_at` is an ISO date-time with an offset.
+- Tags are turned into slugs: `owner/repo` is stored as `owner-repo`. Search with that form.
 - `session_id` ties the write to a run, `attachment` attaches a file.
 - Always `search` for duplicates before writing (see `/mozecek:remember`).
 
@@ -116,6 +130,7 @@ an entity you are adding — **not** for changing what the memory claims.
 
 ```json
 { "id": "mem_01J8…", "patch": { "tags": ["billing", "acme"], "importance": 0.8 } }
+{ "id": "mem_01J8…", "patch": { "visibility": "workspace" } }
 ```
 
 ## `supersede`
@@ -125,8 +140,14 @@ one. The old memory's status does **not** change; it stays `active`.
 
 ```json
 { "old_id": "mem_01J8…", "content": "Acme is invoiced monthly from Q4 2026.",
-  "reason": "decision from the meeting on 2026-09-07", "valid_from": "2026-10-01" }
+  "reason": "decision from the meeting on 2026-09-07", "valid_from": "2026-10-01T00:00:00+02:00" }
 ```
+
+- `supersede` takes no `visibility`: the new memory keeps the old one's. To share it, follow with
+  `update` and `patch: { "visibility": "workspace" }` on the new id.
+- Only your own memories can be superseded or updated. A shared memory of another agent answers
+  `not_found` (`unknown memory <id>`).
+- `valid_from` is an ISO date-time with an offset, like `observed_at`.
 
 `reason` is required and a person reads it. "fix" is not a reason; "at the meeting on 7 Sep we
 agreed on monthly invoicing" is.
