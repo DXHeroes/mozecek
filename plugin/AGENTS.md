@@ -58,5 +58,6 @@ change never reaches installed clients.
 ```bash
 claude plugin validate ./plugin
 claude plugin validate .
-node --test plugin/hooks/capture.test.mjs
+node --test plugin/hooks/capture.test.mjs plugin/bin/mcp-proxy.test.mjs plugin/skills/references.test.mjs \
+  plugin/skills/remember.test.mjs
 ```

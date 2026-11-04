@@ -102,10 +102,24 @@ Writes a new memory.
 { "content": "Acme is invoiced quarterly in advance.", "kind": "semantic", "tier": "long",
   "title": "Acme billing cycle", "tags": ["billing"], "entities": ["acme-corp"],
   "zone": "sales", "importance": 0.7, "confidence": 0.8,
-  "observed_at": "2026-09-07", "visibility": "private", "source": "meeting 2026-09-07" }
+  "observed_at": "2026-09-07T00:00:00Z", "visibility": "agent",
+  "source": { "type": "mcp", "meeting_id": "2026-09-07-acme" } }
+```
+
+A rule that every agent working on the same repository should follow, shared with the workspace:
+
+```json
+{ "content": "Releases of this repository are cut on Thursdays.", "kind": "procedural",
+  "tags": ["release", "owner-repo"], "visibility": "workspace",
+  "source": { "type": "mcp", "url": "https://github.com/owner/repo/pull/12#issuecomment-1" } }
 ```
 
 - `content` is the only required field. Without a `tier` the memory goes to `short`.
+- `visibility` is `agent` (the default, this agent only) or `workspace` (every agent in the
+  workspace). Nothing else is accepted.
+- `source` is an object with a `type` (`mcp` for a write from a skill) and optionally `url`,
+  `meeting_id`, `quote`. `observed_at` is an ISO date-time with an offset.
+- Tags are turned into slugs: `owner/repo` is stored as `owner-repo`. Search with that form.
 - `session_id` ties the write to a run, `attachment` attaches a file.
 - Always `search` for duplicates before writing (see `/mozecek:remember`).
 
@@ -116,6 +130,7 @@ an entity you are adding — **not** for changing what the memory claims.
 
 ```json
 { "id": "mem_01J8…", "patch": { "tags": ["billing", "acme"], "importance": 0.8 } }
+{ "id": "mem_01J8…", "patch": { "visibility": "workspace" } }
 ```
 
 ## `supersede`
