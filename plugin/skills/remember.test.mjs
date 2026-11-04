@@ -31,6 +31,14 @@ function block(markdown, tag) {
   return match[1];
 }
 
+// The bullet of step 3 that sends a changed claim to `mozecek_supersede`.
+function supersedeJudgement(workflow) {
+  return workflow
+    .split(/\n(?=\s+- \*\*)/)
+    .filter((part) => /^\s+- \*\*/.test(part))
+    .find((part) => /→ `mozecek_supersede`/.test(part));
+}
+
 test('remember offers --visibility agent|workspace in its hint and its help', () => {
   const front = SKILL.match(/^---\n([\s\S]*?)\n---/)[1];
   const hint = front.match(/^argument-hint:\s*"([^"]*)"/m)?.[1] ?? '';
@@ -94,4 +102,43 @@ test('the remember examples in the cheatsheet would pass the server schema', () 
     }
   }
   assert.ok(examples.some((example) => example.visibility === 'workspace'), 'show a shared write');
+});
+
+// `mozecek_supersede` takes no `visibility` and the new row copies the old one's. A workspace write
+// that lands on an own `agent` row through supersede therefore has to share the new row afterwards,
+// or `--visibility workspace` ends as an `agent` row without anyone noticing.
+test('remember shares the new row after superseding an agent row for a workspace write', () => {
+  const workflow = block(SKILL, 'workflow');
+  const step = supersedeJudgement(workflow);
+  assert.ok(step, 'no hit judgement calls mozecek_supersede');
+  assert.match(step, /keeps the old row's visibility|copies the old row's visibility/);
+  assert.match(step, /`mozecek_update`[^.]*new[^.]*visibility: "?workspace"?/);
+});
+
+// The server scopes `update` and `supersede` to the calling agent and answers `not_found`
+// (`unknown memory <id>`) for a shared row of another agent; a hit's `agent` field names the
+// caller, not the owner, so the refusal is the only signal the skill gets.
+test('remember recognises another agent\'s shared row by not_found and writes its own row when the claim changed', () => {
+  const workflow = block(SKILL, 'workflow');
+  assert.match(workflow, /`not_found`/);
+  const step = supersedeJudgement(workflow);
+  assert.match(step, /`not_found`[\s\S]*`mozecek_remember`/);
+  assert.match(step, /conflict/i);
+});
+
+test('remember reports the visibility the row ends with', () => {
+  assert.match(block(SKILL, 'output-format'), /visibility the row ends with|final visibility/);
+});
+
+test('the supersede example in the cheatsheet would pass the server schema', () => {
+  const supersede = section(readFileSync(join(REFERENCES, 'tool-cheatsheet.md'), 'utf8'), '## `supersede`');
+  const examples = [...supersede.matchAll(/```json\n([\s\S]*?)```/g)].map((m) => JSON.parse(m[1]));
+  assert.ok(examples.length > 0, 'the supersede section has no JSON example');
+  const allowed = ['old_id', 'content', 'reason', 'valid_from', 'kind', 'tags', 'entities', 'confidence'];
+  const isoDatetime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+  for (const example of examples) {
+    for (const key of Object.keys(example)) assert.ok(allowed.includes(key), `supersede takes no \`${key}\``);
+    if ('valid_from' in example) assert.match(example.valid_from, isoDatetime);
+  }
+  assert.match(supersede, /visibility/, 'say that supersede keeps the old row\'s visibility');
 });

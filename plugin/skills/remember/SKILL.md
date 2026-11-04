@@ -67,16 +67,25 @@ Input: **$ARGUMENTS**
 2. `mozecek_search` with `query` = the memory text, `k: 5` and `include_workspace: false` for
    `agent`, or `include_workspace: true` for `workspace`, so that a rule another agent has already
    shared is found instead of written twice. When you know the entity, add `entities`.
-3. Judge the hits:
+3. Judge the hits. `mozecek_update` and `mozecek_supersede` only reach this agent's own rows: for
+   a shared row of another agent the server answers `not_found` (`unknown memory <id>`), not a
+   message about ownership. A hit's `agent` field names the calling agent, not the owner, so that
+   refusal is the only sign that a `workspace` hit belongs to someone else.
    - **Practically the same and still true** → `mozecek_update` with a `patch` (missing tags,
      entities, `importance`). No new row is created. When you were asked for `workspace` and the hit
      still has `visibility: agent` (search only returns this agent's own rows with that value),
      the patch also carries `visibility: workspace`. A hit that is already `workspace` needs no
-     change of visibility, whichever agent wrote it. When `mozecek_update` refuses a shared row
-     because another agent owns it, leave it: that row already does the job, so write nothing
+     change of visibility, whichever agent wrote it. When `mozecek_update` answers `not_found`,
+     the row belongs to another agent: leave it, because it already does the job, write nothing
      and say so.
    - **Same topic, but the claim changed** → `mozecek_supersede` with `old_id`, the new
      `content`, a `reason` (why it now holds differently) and `valid_from` when you know it.
+     `mozecek_supersede` takes no `visibility`: the new row keeps the old row's visibility. When
+     you were asked for `workspace` and the old row is `agent`, follow with `mozecek_update` on
+     the new row's id and `patch: { visibility: "workspace" }`. When `mozecek_supersede` answers
+     `not_found`, the old row is another agent's shared row: write your own row with
+     `mozecek_remember` (step 4, with the requested visibility) and list the older row under
+     "Similar rows found" as conflicting with the new one.
    - **Nothing close, or only distantly related** → `mozecek_remember`.
 4. Call `mozecek_remember` with `content`, `kind`, `tier` (`long` only with `--long`), `title`
    (a short name, not a whole sentence), `tags`, `entities`, `zone` when you know it,
@@ -96,10 +105,14 @@ Input: **$ARGUMENTS**
 **{id}** — {kind} · {tier} · {agent|workspace} · confidence {high|medium|low}
 > {what is stored, in one sentence}
 
+{agent|workspace} is the visibility the row ends with, as the last tool call returned it — not
+the one you asked for. When they differ, say so.
+
 {When it was an `update` or a `supersede`: "Instead of a new row I {fixed|superseded}
 {old id}, because {reason}."}
 
 ### Similar rows found
 - **{memory_id}** — {one sentence} · {observed_at or "no date"} · confidence {label}
+  {When it is another agent's shared row the new one contradicts: "· conflicts with {id}"}
   {When there are none: "Nothing similar was in memory."}
 </output-format>

@@ -140,8 +140,14 @@ one. The old memory's status does **not** change; it stays `active`.
 
 ```json
 { "old_id": "mem_01J8…", "content": "Acme is invoiced monthly from Q4 2026.",
-  "reason": "decision from the meeting on 2026-09-07", "valid_from": "2026-10-01" }
+  "reason": "decision from the meeting on 2026-09-07", "valid_from": "2026-10-01T00:00:00+02:00" }
 ```
+
+- `supersede` takes no `visibility`: the new memory keeps the old one's. To share it, follow with
+  `update` and `patch: { "visibility": "workspace" }` on the new id.
+- Only your own memories can be superseded or updated. A shared memory of another agent answers
+  `not_found` (`unknown memory <id>`).
+- `valid_from` is an ISO date-time with an offset, like `observed_at`.
 
 `reason` is required and a person reads it. "fix" is not a reason; "at the meeting on 7 Sep we
 agreed on monthly invoicing" is.
