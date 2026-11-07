@@ -59,5 +59,9 @@ change never reaches installed clients.
 claude plugin validate ./plugin
 claude plugin validate .
 node --test plugin/hooks/capture.test.mjs plugin/bin/mcp-proxy.test.mjs plugin/skills/references.test.mjs \
-  plugin/skills/remember.test.mjs
+  plugin/skills/remember.test.mjs plugin/evals/evals.test.mjs
 ```
+
+The eval suite in `plugin/evals/` runs `/mozecek:remember` for real against mocked tools and is
+paid, so it runs by hand, not with the checks; how and when is in
+[`plugin/evals/README.md`](evals/README.md).
