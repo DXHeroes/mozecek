@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: remember-workspace
+description: "--visibility workspace: the skill searches shared rows too (include_workspace: true) and writes exactly one row with visibility workspace. Memory holds nothing similar, so the run has to reach mozecek_remember. The pair of this case is remember-default-agent; the two prompts differ only in the flag."
+tags: [remember, visibility]
+runs: 3
+execution:
+  prompt: |
+    /mozecek:remember "Releases of this repo are cut on Thursdays" --kind procedural --visibility workspace
+  max_turns: 200
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+graders:
+  # A rule another agent already shared must be found, not written twice.
+  - type: regex
+    name: searched-shared-rows
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_search","input":\{[^\n]*"include_workspace":true'
+  - type: regex
+    name: wrote-workspace-row
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_remember","input":\{[^\n]*"visibility":"workspace"'
+  # One claim, one row.
+  - type: regex
+    name: one-row
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_remember"'
+    match: count:1
