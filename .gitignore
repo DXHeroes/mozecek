@@ -4,3 +4,7 @@ dist/
 .env.*
 !.env.example
 .DS_Store
+
+# claude plugin eval output and --mocks record recordings
+plugin/evals/results/
+plugin/evals/mocks/recordings/

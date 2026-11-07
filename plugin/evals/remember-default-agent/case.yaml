@@ -1,0 +1,30 @@
+schema_version: "1.1"
+name: remember-default-agent
+description: "No --visibility: the skill searches only its own rows (include_workspace: false) and writes exactly one row that stays agent, either by sending visibility agent or by leaving the server default; any other value fails. The pair of this case is remember-workspace; the two prompts differ only in the flag."
+tags: [remember, visibility]
+runs: 3
+execution:
+  prompt: |
+    /mozecek:remember "Releases of this repo are cut on Thursdays" --kind procedural
+  max_turns: 200
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+graders:
+  - type: regex
+    name: searched-own-rows
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_search","input":\{[^\n]*"include_workspace":false'
+  # Sharing is the caller's decision: without the flag the row is agent. A write either leaves
+  # visibility out (the server default is agent) or sends exactly "agent"; any other value fails,
+  # including ones the strict server enum rejects without writing a row ("private", "Agent").
+  - type: regex
+    name: agent-row
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_remember","input":\{[^\n]*"visibility":(?!"agent")'
+    match: not_contains
+  # One claim, one row.
+  - type: regex
+    name: one-row
+    target: mock_calls
+    pattern: '"tool":"[^"]*mozecek_remember"'
+    match: count:1
