@@ -49,9 +49,15 @@ function mockCallGraders(yaml) {
     }));
 }
 
-// One line of the `mock_calls` text the harness grades: the call as JSON, one call per line.
+// One line of the `mock_calls` text the harness grades: the call as JSON, one call per line. The
+// output is the stand-in's answer as a string, so a remember call carries the echoed visibility
+// twice: once in `input` and once, escaped, in `output`.
 function callLine(tool, input) {
-  return JSON.stringify({ tool: `mcp__plugin_mozecek_mozecek__${tool}`, input, output: '{}', verdict: 'ok' });
+  const output =
+    tool === 'mozecek_remember'
+      ? body(join(SERVER, 'mozecek_remember.md')).replace(/\{\{input\.(\w+)\}\}/g, (_, key) => String(input[key] ?? ''))
+      : '{}';
+  return JSON.stringify({ tool: `mcp__plugin_mozecek_mozecek__${tool}`, input, output, verdict: 'ok' });
 }
 
 function grade({ pattern, flags, match }, calls) {
@@ -140,22 +146,36 @@ test('the workspace case passes a shared write and fails an own one', () => {
   assert.ok(passes(graders, [search(true), write({ visibility: 'workspace' })]));
   assert.ok(!passes(graders, [search(true), write({ visibility: 'agent' })]), 'an agent row must fail');
   assert.ok(!passes(graders, [search(true), write({})]), 'a write without visibility is an agent row');
+  for (const visibility of ['Workspace', 'shared', 'workspace ']) {
+    const run = [search(true), write({ visibility })];
+    assert.ok(!passes(graders, run), `visibility ${JSON.stringify(visibility)} is not a workspace row`);
+  }
   assert.ok(!passes(graders, [search(false), write({ visibility: 'workspace' })]), 'the search must see shared rows');
   assert.ok(!passes(graders, [search(true)]), 'a run that writes nothing must fail');
   const twice = [search(true), write({ visibility: 'workspace' }), write({ visibility: 'workspace' })];
   assert.ok(!passes(graders, twice), 'one claim, one row');
 });
 
-test('the default case passes an own write and fails a shared one', () => {
+// Without the flag the row must be `agent`, not merely "not workspace": the server enum is strict,
+// so any other value is rejected and no row is written. `private` is the value the cheatsheet
+// wrongly offered (DXHeroes/dxhagents#192).
+const NOT_AGENT = ['workspace', 'private', 'Agent', 'shared', 'agent ', '', null];
+
+test('the default case passes only an agent write and fails any other visibility', () => {
   const graders = mockCallGraders(cases.find(({ yaml }) => !/--visibility/.test(prompt(yaml))).yaml);
   assert.ok(graders.length >= 2, 'the default case grades the mock calls');
   const search = (workspace) => callLine('mozecek_search', { query: 'x', k: 5, include_workspace: workspace });
   const write = (extra) => callLine('mozecek_remember', { content: 'x', source: { type: 'mcp' }, ...extra });
   assert.ok(passes(graders, [search(false), write({ visibility: 'agent' })]));
   assert.ok(passes(graders, [search(false), write({})]), 'the server default is agent');
-  assert.ok(!passes(graders, [search(false), write({ visibility: 'workspace' })]), 'a shared row must fail');
+  for (const visibility of NOT_AGENT) {
+    const run = [search(false), write({ visibility })];
+    assert.ok(!passes(graders, run), `visibility ${JSON.stringify(visibility)} is not an agent row`);
+  }
   assert.ok(!passes(graders, [search(true), write({ visibility: 'agent' })]), 'the search stays with own rows');
   assert.ok(!passes(graders, [search(false)]), 'a run that writes nothing must fail');
+  const twice = [search(false), write({ visibility: 'agent' }), write({})];
+  assert.ok(!passes(graders, twice), 'one claim, one row');
 });
 
 test('run output stays out of git', () => {

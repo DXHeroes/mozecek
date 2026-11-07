@@ -9,13 +9,19 @@ writes nothing anywhere.
 | Case | Prompt | Passes when |
 | --- | --- | --- |
 | `remember-workspace` | `/mozecek:remember "…" --kind procedural --visibility workspace` | the duplicate search includes shared rows (`include_workspace: true`) and exactly one `mozecek_remember` call carries `visibility: "workspace"` |
-| `remember-default-agent` | the same text without `--visibility` | the duplicate search stays with the agent's own rows (`include_workspace: false`), no call carries `visibility: "workspace"` and exactly one row is written |
+| `remember-default-agent` | the same text without `--visibility` | the duplicate search stays with the agent's own rows (`include_workspace: false`) and exactly one row is written, either without `visibility` (the server default is `agent`) or with `visibility: "agent"`; any other value fails, including ones the server rejects without writing a row (`"private"`, `"Agent"`) |
 
 The two prompts differ only in the flag, so the flag is the only thing that can explain a
 different result. Memory holds nothing similar (`mocks/mozecek/mozecek_search.md` returns no hits),
 so the run has to reach `mozecek_remember`, and the graders read the arguments the stand-in
 received (`target: mock_calls`). `mocks/mozecek/_tools.json` is the server's own `tools/list`
 for the two tools of this flow, so the model sees the real schema and nothing else.
+
+The stand-in does not validate what it receives: it answers any `mozecek_remember` call, also one
+the real server would refuse. That is why the graders name the allowed values instead of ruling
+out one wrong value. The harness's `expect:` guard on the stand-in cannot do it either (Claude Code
+2.1.319): it treats a missing field as a violation and would abort a run that leaves `visibility`
+to the server default.
 
 ## Running it
 
