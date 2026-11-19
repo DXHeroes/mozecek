@@ -27,7 +27,7 @@ const skillDirs = readdirSync(SKILLS, { withFileTypes: true })
   .sort();
 
 test('the skills are discovered where the specification looks for them', () => {
-  assert.deepEqual(skillDirs, ['recall', 'remember', 'review', 'sleep']);
+  assert.deepEqual(skillDirs, ['catalog', 'recall', 'remember', 'review', 'sleep']);
 });
 
 test('every reference a skill loads is bundled with that skill and matches the source', () => {

@@ -145,6 +145,7 @@ instructions.
 | `/mozecek:remember <text>` | stores a memory after a duplicate check |
 | `/mozecek:sleep [--wait]` | reports the last nightly consolidation and how to trigger another |
 | `/mozecek:review [--since 7d] [--apply]` | reviews memory; writes only with `--apply` |
+| `/mozecek:catalog find\|refresh\|setup\|pr` | walks a repository's context catalog to find information, or refreshes it, sets it up, or opens a refresh PR (`bin/mozecek-catalog.mjs`) |
 
 The review behind `/mozecek:review` is done by the `mozecek:memory-curator` subagent
 (`agents/memory-curator.md`).

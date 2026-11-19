@@ -30,7 +30,9 @@ before use: `[[ "$id" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || exit 1`.
 - Resolve a contradiction with `supersede` and a `reason`, not a silent overwrite. `forget` is
   the last resort and always carries a reason.
 - The `review` skill proposes; it acts only with `--apply`. Without that flag it writes nothing.
-- This plugin does not modify files in a repository.
+- This plugin does not modify files in a repository, with one exception: the `catalog` skill
+  writes catalog files (`_context.json`, `<file>.meta.json`) when asked to refresh or set up a
+  catalog, and opens a PR for a person to merge; it never edits the files it describes.
 
 ## 4. Secrets
 - An agent token is scoped to reading and writing one agent's memory. The client keeps it itself
