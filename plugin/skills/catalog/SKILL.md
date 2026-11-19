@@ -136,8 +136,8 @@ or a missing file.
      `include`;
    - files whose content must never go to a model (contracts, personal data, credentials) →
      `.contextignore`;
-   - markdown frontmatter `summary`/`description` and image folders with `_index.json` captions
-     — these are inherited and cost no model call.
+   - markdown frontmatter `summary`/`description` and captions in Git-tracked `_index.json`
+     files — these are inherited and cost no model call.
 3. Show the owner the proposed `.catalog.json` (only the keys you need) and `.contextignore`.
    Write them after the owner agrees.
 4. `node "$CATALOG" build "<root>" --no-model`, then `node "$CATALOG" check "<root>"`. This shows

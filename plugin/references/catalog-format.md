@@ -14,9 +14,14 @@ the tool's source are binding; this file describes them. Every catalog file carr
 | `.contextignore` | a person | gitignore-style patterns of files never sent to the model |
 | `_index.json` | a person | captions of a folder's files; the tool reads it and never writes it |
 
-The tool never catalogs `_context.json`, `.catalog.json`, `.contextignore`, or `X.meta.json`
-when `X` exists next to it. The file list comes from git (tracked and untracked, minus ignored);
-symlinks and submodules are skipped.
+`build` and `check` catalog Git-tracked originals, including staged additions. They skip
+symlinks and submodules. They can discover generated sidecars, folder indexes and nested
+`.catalog.json` files before staging, as long as Git does not ignore them.
+
+Catalog artifacts are excluded from the list of originals. These are `_context.json`,
+`.catalog.json`, `.contextignore` and `X.meta.json` if a tracked `X` exists next to it or the
+sidecar contains a valid card for `X`. Use `describe <file>` for a single named file, such as
+an untracked attachment or a file outside a Git repository.
 
 **When a sidecar exists.** Text, data and code files under 200 lines (`sidecar_min_lines` in
 `.catalog.json` changes the number) keep their card inline in the folder index. Every other file
@@ -82,7 +87,8 @@ gets a sidecar.
 A summary people already wrote is taken instead of asking a model, and the file is not sent:
 
 - a markdown file's frontmatter `summary`, else its `description`;
-- the `caption` of the file's entry in its folder's `_index.json`.
+- the `caption` of the file's entry in its folder's `_index.json`. For `build` and `check`,
+  that index must be Git-tracked.
 
 Such a card has `description.status: "inherited"`, keywords from the same source's `keywords`
 else `tags`, empty `entities` and `language: null`. Source code never inherits a description.
@@ -163,7 +169,7 @@ a folder's entry in its parent repeats the summary in the folder's own `_context
 | Key | Value |
 |---|---|
 | `schema` | `1`, optional |
-| `include` | gitignore-style patterns; only matching files are cataloged. Without it, everything git lists under the root |
+| `include` | gitignore-style patterns that limit which Git-tracked originals to catalog. Omit it to include all eligible originals under the root |
 | `skip` | gitignore-style patterns of files left out of the catalog entirely |
 | `collections` | `[{ path, index, note }]`: `path` is a folder inside the root, `index` a list of files inside the root (may be empty), `note` free text for the agent |
 | `sidecar_min_lines` | positive integer; replaces the 200-line sidecar threshold |
