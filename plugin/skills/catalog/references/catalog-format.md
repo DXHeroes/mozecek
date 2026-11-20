@@ -171,9 +171,10 @@ folder summaries that lack cache evidence.
 
 **When a folder summary is rewritten.** The model reads up to 200 eligible entries per folder,
 in order of subfolders, nested catalogs, collections, then files. It reads names, summaries and
-file counts for subfolders, names and summaries for nested catalogs, names and notes for
-collections, and names, kinds, titles, summaries and languages for files. The build starts
-with the deepest folders. A build with a model recomputes the summary when cache evidence is
+file counts for subfolders, names from eligible nested-catalog declarations, names and notes
+for collections, and names, kinds, titles, summaries and languages for files. The local
+index also shows the summaries of nested catalogs. The build starts with the deepest
+folders. A build with a model recomputes the summary when cache evidence is
 missing, when the eligible input or stored summary changes, or when `--force` is set. If a model
 call fails or the call limit is reached, the build keeps a verified previous summary if available.
 A missing or outdated summary stays `null` for the next build with a model to retry. A build
@@ -209,8 +210,10 @@ was given.
 ## `.contextignore`
 
 Gitignore syntax, at the catalog root. A matching file is still cataloged and gets a technical
-card with `description.reason: "ignored"` (unless people wrote a summary for it), but its
-content is never sent to the model.
+card with `description.reason: "ignored"` unless an existing human description is available.
+Matching files are excluded from direct description and from the inputs to folder summaries.
+An `_index.json` with a matching file entry is available for local inheritance and excluded
+from model input.
 
 ## Thread integration `attachments.json`
 
