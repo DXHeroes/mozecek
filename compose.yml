@@ -1,10 +1,10 @@
-# Mozeček, free edition: the published image plus a Postgres with pgvector.
+# Mozeček, Community Edition: the published image plus a Postgres with pgvector.
 #
 # The image is built from the service repository and published to GHCR; nothing here builds from
 # source. `docker compose up -d`, then open http://127.0.0.1:3000/ui and sign in with
 # MOZECEK_ADMIN_TOKEN.
 #
-# The free edition allows ten agents on one instance. Everything else — memory, search, sleep,
+# The Community Edition allows ten agents on one instance. Everything else — memory, search, sleep,
 # the MCP endpoint — is unlimited.
 
 name: mozecek
@@ -26,7 +26,7 @@ services:
       retries: 10
 
   api:
-    image: ghcr.io/dxheroes/mozecek:0.1.0@sha256:975b09687a302574aad54801767a2e1bd560ee99f2dcb7fe9c1eb35a4a5c0fec
+    image: ghcr.io/dxheroes/mozecek:0.2.0@sha256:1615e82f971b0f13669d0bf7701f621874f383c38f90cd7c2fc41ee19b1a6f77
     restart: unless-stopped
     init: true
     read_only: true
