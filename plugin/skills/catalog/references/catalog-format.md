@@ -82,6 +82,12 @@ gets a sidecar.
 
 `reason` is set exactly when `status` is `none`.
 
+**Refreshing cached descriptions.** A regular build reuses the model description of an unchanged
+file. Use `build [<root>] --refresh-kind <kind,...>` to refresh cached model descriptions for the
+selected file kinds, such as `sheet,slides,document`. This requires a model. Files with inherited
+descriptions keep them. If a model call fails or the build reaches `--max-calls`, run a regular
+build to finish the refresh and reuse completed descriptions.
+
 ### Inherited descriptions and `inherited`
 
 A summary people already wrote is taken instead of asking a model, and the file is not sent:
@@ -146,13 +152,16 @@ A `files[]` entry for a file **with** a sidecar is the short card: every card fi
 `structure` and `inherited`, plus `"sidecar": true`; the rest is in `<name>.meta.json`. A file
 **without** a sidecar appears as the full card plus `"sidecar": false`.
 
-**When a folder summary is rewritten.** It is written from the names, kinds, titles and
-summaries of the first 200 entries, subfolder summaries, nested catalogs and collection notes,
-deepest folders first. A build writes it again only when the folder has none, its list of
-entries changed (`children_sha256`), the file count below a subfolder changed, a subfolder
-summary changed, or with `--force`. Without a model a summary is kept while the list of entries
-stays the same, and dropped otherwise. `check` does not predict model summaries; it checks that
-a folder's entry in its parent repeats the summary in the folder's own `_context.json`.
+**When a folder summary is rewritten.** The model reads up to 200 entries per folder, in order
+of subfolders, nested catalogs, collections, then files. It reads names, summaries and file
+counts for subfolders, names and summaries for nested catalogs, names and notes for collections,
+and names, kinds, titles, summaries and languages for files. The build starts with the deepest
+folders and recomputes a summary when one is missing, when the entry names (`children_sha256`)
+or any of those facts change, or when `--force` is set. If a model call fails or the call limit
+is reached, the build leaves a missing or outdated summary as `null` so the next build with a
+model retries it. A build without a model keeps an existing summary while the entry names stay
+the same and drops it when they change. `check` verifies that each subfolder's entry in its
+parent repeats the summary in the subfolder's own `_context.json`.
 
 ## Configuration `.catalog.json`
 
