@@ -5,6 +5,52 @@ again.
 
 For developers and operators who want to self-host memory for their AI agents.
 
+## Connect to a remote instance
+
+Ask your Mozeček operator for the instance's HTTPS address and a read/write key for your agent.
+For example, the instance address is `https://mozecek.example.com` and its MCP endpoint is
+`https://mozecek.example.com/mcp`. [Deploy your own instance](#deploy-mozeček) if you need one.
+
+1. Install the plugin on the machine that runs your agent. For Claude Code with Node.js available,
+   run these commands in your shell.
+
+   ```sh
+   claude plugin marketplace add DXHeroes/mozecek
+   claude plugin install mozecek@mozecek
+   ```
+
+   For another [Agent Plugins](https://agent-plugins.org) client, install the [portable plugin](plugin/)
+   using the client's plugin installer.
+
+2. In Claude Code, open `/plugin`, select Mozeček and choose **Configure options**. Set
+   **Instance address** to the base address (`https://mozecek.example.com`) and **Agent key** to the
+   key issued for your agent. Start a new session and open `/mcp`. Mozeček should show as connected.
+
+   For headless agents, set `MOZECEK_URL` to the same base address and provide the agent key as
+   `MOZECEK_TOKEN` from your runtime's secret store. Start the client with both variables set.
+   [Plugin configuration and credential precedence](plugin/README.md#environment-variables)
+
+3. In Claude Code, save a test memory and ask for it back in a **new session**.
+
+   ```text
+   /mozecek:remember The demo observatory opens its brass dome at 9 p.m.
+   ```
+
+   ```text
+   /mozecek:recall When does the demo observatory open its brass dome?
+   ```
+
+   The recall should return the saved fact and cite the memory it found.
+
+The skills call Mozeček's tools through MCP. The plugin adds `/mcp` to the instance address and
+sends the agent key as a bearer token. Memories live on the server, so the same agent can recall
+them across sessions and clients. [Available skills](plugin/README.md#skills)
+
+For a client with native remote MCP support, set the endpoint to
+`https://mozecek.example.com/mcp`, choose **Streamable HTTP**, and set the `Authorization` header
+to `Bearer <agent-key>` through the client's credential settings. This connection provides the MCP
+tools. Install the plugin to use its skills.
+
 ## The problem
 
 - I start a new session and have to explain decisions we already made.
@@ -35,8 +81,8 @@ For developers and operators who want to self-host memory for their AI agents.
   search later.
 - Find a procedure even if you only remember what it was for. Mozeček searches by meaning as
   well as by the words you type.
-- Check a detail before acting on it. Open a saved memory to see any recorded excerpt or file
-  location, including a line number when available.
+- Check a detail before acting on it. Your agent can cite a saved excerpt or file location
+  when the memory has those details.
 - Keep repeated notes from piling up. Mozeček merges duplicates overnight and moves memories
   worth keeping into long-term storage.
 
@@ -51,100 +97,69 @@ what they saved against the original.
 
 *Prokop Simek*
 
-## Run it in 5 minutes
+<a name="run-it-in-5-minutes"></a>
+<a name="running-it-yourself"></a>
 
-You'll need Git, Docker Compose, and OpenSSL. To complete the walkthrough with Gemini, you'll
-also need Node.js 22.19 or later with `npx` and a
-[Google AI Studio API key](https://aistudio.google.com/apikey).
-The five minutes exclude Docker image downloads and getting the key. To explore just the UI
-without a model or API key, use the `fake` provider.
+## Deploy Mozeček
 
-1. Clone the repository.
+Deploy the Community Edition on a server if your agents run on other machines. The same
+Compose setup also works on your own computer.
+
+1. On the host, clone the repository and create the configuration.
 
    ```sh
    git clone https://github.com/DXHeroes/mozecek.git
    cd mozecek
-   ```
-
-   The directory contains `compose.yml` and `.env.example`.
-
-2. Create your local configuration, generate two secrets, and start Mozeček.
-
-   ```sh
    (umask 077; cp .env.example .env)
    openssl rand -hex 32
    openssl rand -hex 32
    ```
 
-   In `.env`, set `MOZECEK_ADMIN_TOKEN` to the first generated value, `POSTGRES_PASSWORD` to
-   the second, and choose a provider.
+   In `.env`, use the two generated values for `MOZECEK_ADMIN_TOKEN` and `POSTGRES_PASSWORD`.
+   Set `GEMINI_API_KEY` to a [Google AI Studio key](https://aistudio.google.com/apikey) and keep
+   `MOZECEK_PROVIDER=gemini`. For a local connection test without a model, set
+   `MOZECEK_PROVIDER=fake` and leave `GEMINI_API_KEY` empty.
 
-   - For the full walkthrough, keep `MOZECEK_PROVIDER=gemini` and set `GEMINI_API_KEY` to your
-     Google AI Studio key.
-   - For the UI preview, set `MOZECEK_PROVIDER=fake` and leave `GEMINI_API_KEY=` empty.
+   Set `MOZECEK_PUBLIC_URL=https://mozecek.example.com` for a server deployment. For a local
+   deployment, keep `MOZECEK_PUBLIC_URL=http://127.0.0.1:3000`. The URL is the base address.
 
-   Start the containers and check readiness.
+2. Start the pinned image and check readiness on the host.
 
    ```sh
    docker compose up -d
    curl -fsS http://127.0.0.1:3000/readyz
    ```
 
-   Repeat the `curl` command until the response shows `"ok":true` and your chosen provider
-   (`"provider":"gemini"` or `"provider":"fake"`).
+   When startup and migrations are complete, the response shows `"ok":true`. The service listens
+   on loopback. For a server deployment, point DNS at the host and configure a reverse proxy with
+   TLS on that host. For example, a [Caddy reverse proxy](https://caddyserver.com/docs/quick-starts/reverse-proxy)
+   can use this Caddyfile entry.
 
-3. Open [the local UI](http://127.0.0.1:3000/ui) and sign in with your operator token
-   (`MOZECEK_ADMIN_TOKEN`). If you're using `fake`, stop here and explore the UI.
-
-   With Gemini, open **Agents** and fill in the **Add a colleague** form. Set **Name** to
-   `Demo Agent`, choose **a new workspace…** under **Workspace**, and enter `demo-workspace`
-   as the workspace slug. Click **Add a colleague**.
-
-   The form shows the one-time read/write key for `demo-agent`. Copy it for the next step.
-
-4. In Bash or Zsh, connect MCP Inspector through the bundled plugin proxy. Paste the agent key
-   at the prompt. The temporary configuration contains the key, so keep it private.
-
-   ```sh
-   unset MOZECEK_AUTO_CAPTURE
-   export MOZECEK_URL=http://127.0.0.1:3000
-   printf 'Paste the agent key: '
-   IFS= read -rs MOZECEK_TOKEN
-   printf '\n'
-   export MOZECEK_TOKEN
-   mcp_dir="$(mktemp -d)"
-   mcp_config="$mcp_dir/inspector.json"
-   (umask 077; node -e '
-     const { MOZECEK_URL, MOZECEK_TOKEN } = process.env;
-     console.log(JSON.stringify({ mcpServers: { mozecek: {
-       command: "node", args: ["plugin/bin/mcp-proxy.mjs"],
-       env: { MOZECEK_URL, MOZECEK_TOKEN }
-     } } }));
-   ' > "$mcp_config")
-   mcp_call() {
-     MCP_STORAGE_DIR="$mcp_dir" npx --yes @modelcontextprotocol/inspector@2.11.0 --cli \
-       --config "$mcp_config" --server mozecek --method tools/call --tool-name "$@"
+   ```caddyfile
+   mozecek.example.com {
+       reverse_proxy 127.0.0.1:3000
    }
-   mcp_call mozecek_stats
    ```
 
-   The response shows empty memory counts for your new agent.
+   Check `https://mozecek.example.com/readyz` from the agent's network. Its MCP endpoint is
+   `https://mozecek.example.com/mcp`. For an agent on the same computer as a local deployment,
+   use `http://127.0.0.1:3000/mcp`.
 
-5. Search the new agent's memory, save an example, and run the same search again.
+3. On the deployment host, issue a key using the CLI bundled with the container.
 
    ```sh
-   mcp_call mozecek_search --tool-arg 'query=When does the demo observatory open its dome?'
-   mcp_call mozecek_remember --tool-arg 'content=The demo observatory opens its brass dome at 9 p.m.'
-   mcp_call mozecek_search --tool-arg 'query=When does the demo observatory open its dome?'
+   docker compose exec api /nodejs/bin/node packages/cli/dist/main.js onboard \
+     --url http://127.0.0.1:3000 \
+     --slug demo-agent --name "Demo Agent" --workspace demo-workspace
    ```
 
-   The first search is empty. The save returns `"created": true`, and the second search returns
-   the same memory ID and quotes the sentence you just saved.
+   The command creates or reuses the workspace and agent and prints a new read/write key once.
+   Share the agent key through a secret store and keep the operator token on the host. Then
+   [connect the plugin](#connect-to-a-remote-instance) using the deployment's base address.
+   For a local deployment, use `http://127.0.0.1:3000` as the plugin's instance address.
 
-### What next
-
-- [Connect your agent with the plugin](#the-plugin).
-- [Verify the image and upgrade your instance](#container-releases).
+See [container releases](#container-releases) for signature verification and upgrades. Use
+`docker compose logs -f api` to check startup.
 
 ## Community vs. Enterprise
 
@@ -208,61 +223,10 @@ load it, and it keeps Claude Code's own layout alongside.
 - **A capture hook.** Optionally stores finished Claude Code sessions. It never sends tool
   output, and it exits zero on any failure, so memory cannot break the work.
 
-## The plugin
+<a name="the-plugin"></a>
 
-In Claude Code:
-
-```bash
-claude plugin marketplace add DXHeroes/mozecek
-/plugin install mozecek@mozecek          # inside claude
-```
-
-In any other Agent Plugins client, install `plugin/` the way that client documents; the portable
-manifest is `plugin/plugin.json`.
-
-The plugin needs the address of an instance and an agent key. **There is no default address** — a
-plugin carrying its publisher's address would send every install that forgot the variable there.
-Three ways to supply them, in the order the plugin looks:
-
-```bash
-export MOZECEK_URL="https://mozecek.example.com"   # no trailing slash
-export MOZECEK_TOKEN="mz_<agent>_…"
-export MOZECEK_AUTO_CAPTURE=1                      # optional: store finished sessions
-```
-
-Or fill in the plugin's own options, which keeps the key in the OS keychain instead of a
-configuration file — in Claude Code that is `/plugin` → the plugin → **Configure options**. Or,
-for a client that offers neither, write them to the writable data directory it hands the plugin:
-
-```json
-// $PLUGIN_DATA/credentials.json
-{ "url": "https://mozecek.example.com", "token": "mz_<agent>_…" }
-```
-
-The MCP server itself is `plugin/bin/mcp-proxy.mjs`, a dependency-free stdio server that talks
-Streamable HTTP to your instance. It exists because Agent Plugins deliberately carries no
-credentials in package data, so a portable `mcp.json` cannot hold a key or a per-user address.
-
-To check it worked, the client must list the server `mozecek` as connected — in Claude Code,
-`/mcp`. The tools, the skills and the rest of the detail are in
-[`plugin/README.md`](plugin/README.md).
-
-## Running it yourself
-
-You need Docker and a Google AI Studio key — or `MOZECEK_PROVIDER=fake`, which starts the service
-and calls no model at all.
-
-```bash
-git clone https://github.com/DXHeroes/mozecek.git && cd mozecek
-cp .env.example .env       # fill in MOZECEK_ADMIN_TOKEN, POSTGRES_PASSWORD and GEMINI_API_KEY
-docker compose up -d
-```
-
-Then open `http://127.0.0.1:3000/ui`, sign in with the operator token, and issue a key for your
-first agent. That key is the `MOZECEK_TOKEN` above.
-
-The service runs its own migrations at boot. `docker compose logs -f api` shows whether it came
-up; `/healthz` and `/readyz` answer the same question for a machine.
+See the [plugin reference](plugin/README.md) for the full tool and skill lists, credential sources,
+and optional session capture.
 
 ## Security
 
