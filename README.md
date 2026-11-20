@@ -53,10 +53,11 @@ what they saved against the original.
 
 ## Run it in 5 minutes
 
-You'll need Git, Docker Compose, OpenSSL, Node.js 22.19 or later with `npx`, and a
-[Google AI Studio API key](https://aistudio.google.com/apikey). The five minutes exclude Docker
-image downloads and getting the key. Set `MOZECEK_PROVIDER=fake` in `.env` to explore the UI
-without a model or API key.
+You'll need Git, Docker Compose, and OpenSSL. To complete the walkthrough with Gemini, you'll
+also need Node.js 22.19 or later with `npx` and a
+[Google AI Studio API key](https://aistudio.google.com/apikey).
+The five minutes exclude Docker image downloads and getting the key. To explore just the UI
+without a model or API key, use the `fake` provider.
 
 1. Clone the repository.
 
@@ -76,19 +77,27 @@ without a model or API key.
    ```
 
    In `.env`, set `MOZECEK_ADMIN_TOKEN` to the first generated value, `POSTGRES_PASSWORD` to
-   the second, and `GEMINI_API_KEY` to your Google AI Studio key. Start the containers and
-   check readiness.
+   the second, and choose a provider.
+
+   - For the full walkthrough, keep `MOZECEK_PROVIDER=gemini` and set `GEMINI_API_KEY` to your
+     Google AI Studio key.
+   - For the UI preview, set `MOZECEK_PROVIDER=fake` and leave `GEMINI_API_KEY=` empty.
+
+   Start the containers and check readiness.
 
    ```sh
    docker compose up -d
    curl -fsS http://127.0.0.1:3000/readyz
    ```
 
-   Repeat the `curl` command until the response shows `"ok":true` and `"provider":"gemini"`.
+   Repeat the `curl` command until the response shows `"ok":true` and your chosen provider
+   (`"provider":"gemini"` or `"provider":"fake"`).
 
 3. Open [the local UI](http://127.0.0.1:3000/ui) and sign in with your operator token
-   (`MOZECEK_ADMIN_TOKEN`). Open **Agents** and fill in the **Add a colleague** form. Set **Name**
-   to `Demo Agent`, choose **a new workspace…** under **Workspace**, and enter `demo-workspace`
+   (`MOZECEK_ADMIN_TOKEN`). If you're using `fake`, stop here and explore the UI.
+
+   With Gemini, open **Agents** and fill in the **Add a colleague** form. Set **Name** to
+   `Demo Agent`, choose **a new workspace…** under **Workspace**, and enter `demo-workspace`
    as the workspace slug. Click **Add a colleague**.
 
    The form shows the one-time read/write key for `demo-agent`. Copy it for the next step.
@@ -132,6 +141,11 @@ without a model or API key.
    The first search is empty. The save returns `"created": true`, and the second search returns
    the same memory ID and quotes the sentence you just saved.
 
+### What next
+
+- [Connect your agent with the plugin](#the-plugin).
+- [Verify the image and upgrade your instance](#container-releases).
+
 ## Community vs. Enterprise
 
 | | Community Edition | Enterprise Edition |
@@ -156,7 +170,7 @@ For Enterprise Edition, [contact DX Heroes](https://dxheroes.io/contact).
 ### New in 0.2.0
 
 - The twelfth MCP tool, `mozecek_context`, returns original passages and citations within a size
-  limit. It joins the [original eleven tools](#what-it-does).
+  limit.
 - Use revision history to search what Mozeček had recorded before a later correction.
 - Look up ticket IDs and version numbers directly. Search can also find words in a link's path.
 
@@ -180,11 +194,11 @@ load it, and it keeps Claude Code's own layout alongside.
 
 ## What it does
 
-- **An MCP server per agent.** Streamable HTTP, bearer key. Eleven `mozecek_*` tools: `search`,
-  `list`, `recall`, `timeline`, `ask`, `stats`, `profile`, `remember`, `update`, `supersede`,
-  `forget`.
-- **Answers carry their sources.** Every hit brings a `memory_id` and a verbatim quote with a
-  path, a line and a timestamp. No citation, no finding.
+- **An MCP server per agent.** Streamable HTTP with a bearer key. The twelve `mozecek_*` tools
+  are `search`, `list`, `recall`, `timeline`, `ask`, `stats`, `profile`, `remember`, `update`,
+  `supersede`, `forget`, and `context`.
+- **Search hits identify the memory.** Each hit includes a `memory_id` and an excerpt. Source
+  details such as a citation quote, path, and line number appear when recorded.
 - **Nothing is deleted.** `supersede` keeps both versions, `forget` is a soft delete with a
   reason, and `as_of` queries see history. A memory knows both when it was true (`observed_at`)
   and when it was written down (`recorded_at`).
@@ -271,11 +285,12 @@ development toolchain or build credentials. Runtime secrets are supplied by the 
 A downloadable image can be inspected and modified. Minification and separate builds reduce
 accidental disclosure; they do not prevent reverse engineering or modification of edition limits.
 
-Verify the CE release using [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/)
-and the public key from this repository before starting it:
+Use [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/) and the public key
+from this repository to verify the exact CE image pinned in Compose before starting it.
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/dxheroes/mozecek:0.2.0
+cosign verify --key cosign.pub \
+  ghcr.io/dxheroes/mozecek:0.2.0@sha256:1615e82f971b0f13669d0bf7701f621874f383c38f90cd7c2fc41ee19b1a6f77
 docker compose pull
 docker compose up -d
 ```
