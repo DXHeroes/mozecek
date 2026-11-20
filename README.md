@@ -1,5 +1,86 @@
 # Mozeček
 
+## Run it in 5 minutes
+
+You'll need Git, Docker Compose, OpenSSL, Node.js 22.19 or later with `npx`, and a
+[Google AI Studio API key](https://aistudio.google.com/apikey). The five minutes exclude Docker
+image downloads and getting the key. Set `MOZECEK_PROVIDER=fake` in `.env` to explore the UI
+without a model or API key.
+
+1. Clone the repository.
+
+   ```sh
+   git clone https://github.com/DXHeroes/mozecek.git
+   cd mozecek
+   ```
+
+   The directory contains `compose.yml` and `.env.example`.
+
+2. Create your local configuration, generate two secrets, and start Mozeček.
+
+   ```sh
+   (umask 077; cp .env.example .env)
+   openssl rand -hex 32
+   openssl rand -hex 32
+   ```
+
+   In `.env`, set `MOZECEK_ADMIN_TOKEN` to the first generated value, `POSTGRES_PASSWORD` to
+   the second, and `GEMINI_API_KEY` to your Google AI Studio key. Start the containers and
+   check readiness.
+
+   ```sh
+   docker compose up -d
+   curl -fsS http://127.0.0.1:3000/readyz
+   ```
+
+   Repeat the `curl` command until the response shows `"ok":true` and `"provider":"gemini"`.
+
+3. Open [the local UI](http://127.0.0.1:3000/ui) and sign in with your operator token
+   (`MOZECEK_ADMIN_TOKEN`). Open **Agents** and fill in the **Add a colleague** form. Set **Name**
+   to `Demo Agent`, choose **a new workspace…** under **Workspace**, and enter `demo-workspace`
+   as the workspace slug. Click **Add a colleague**.
+
+   The form shows the one-time read/write key for `demo-agent`. Copy it for the next step.
+
+4. In Bash or Zsh, connect MCP Inspector through the bundled plugin proxy. Paste the agent key
+   at the prompt. The temporary configuration contains the key, so keep it private.
+
+   ```sh
+   unset MOZECEK_AUTO_CAPTURE
+   export MOZECEK_URL=http://127.0.0.1:3000
+   printf 'Paste the agent key: '
+   IFS= read -rs MOZECEK_TOKEN
+   printf '\n'
+   export MOZECEK_TOKEN
+   mcp_dir="$(mktemp -d)"
+   mcp_config="$mcp_dir/inspector.json"
+   (umask 077; node -e '
+     const { MOZECEK_URL, MOZECEK_TOKEN } = process.env;
+     console.log(JSON.stringify({ mcpServers: { mozecek: {
+       command: "node", args: ["plugin/bin/mcp-proxy.mjs"],
+       env: { MOZECEK_URL, MOZECEK_TOKEN }
+     } } }));
+   ' > "$mcp_config")
+   mcp_call() {
+     MCP_STORAGE_DIR="$mcp_dir" npx --yes @modelcontextprotocol/inspector@2.11.0 --cli \
+       --config "$mcp_config" --server mozecek --method tools/call --tool-name "$@"
+   }
+   mcp_call mozecek_stats
+   ```
+
+   The response shows empty memory counts for your new agent.
+
+5. Search the new agent's memory, save an example, and run the same search again.
+
+   ```sh
+   mcp_call mozecek_search --tool-arg 'query=When does the demo observatory open its dome?'
+   mcp_call mozecek_remember --tool-arg 'content=The demo observatory opens its brass dome at 9 p.m.'
+   mcp_call mozecek_search --tool-arg 'query=When does the demo observatory open its dome?'
+   ```
+
+   The first search is empty. The save returns `"created": true`, and the second search returns
+   the same memory ID and quotes the sentence you just saved.
+
 Memory for agents. Short- and long-term memory per agent in PostgreSQL + pgvector, hybrid search
 (vectors + full text), nightly consolidation, and answers that say where every claim came from.
 
