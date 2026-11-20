@@ -254,7 +254,7 @@ from this repository to verify the exact CE image pinned in Compose before start
 
 ```bash
 cosign verify --key cosign.pub \
-  ghcr.io/dxheroes/mozecek:0.2.0@sha256:1615e82f971b0f13669d0bf7701f621874f383c38f90cd7c2fc41ee19b1a6f77
+  ghcr.io/dxheroes/mozecek:0.3.0@sha256:bc0d11955ec85ba773413eb70e1c552297c9e5195ffd8ae0e9fd015243c536a7
 docker compose pull
 docker compose up -d
 ```
