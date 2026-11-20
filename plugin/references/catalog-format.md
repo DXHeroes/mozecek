@@ -1,8 +1,8 @@
 # Catalog format, schema 1
 
-The files `bin/mozecek-catalog.mjs` reads and writes in a context repository. The Zod schemas in
-the tool's source are binding; this file describes them. Every catalog file carries
-`"schema": 1`.
+The catalog CLI generates sidecars and folder indexes with `"schema": 1` and returns a card
+with the same schema version from `describe --json`. The Zod schemas in the tool's source
+define these formats. Thread integrations can use the card in their own attachment records.
 
 ## Contents
 
@@ -11,6 +11,7 @@ the tool's source are binding; this file describes them. Every catalog file carr
 - [Folder index `_context.json`](#folder-index-_contextjson)
 - [Configuration `.catalog.json`](#configuration-catalogjson)
 - [`.contextignore`](#contextignore)
+- [Thread integration `attachments.json`](#thread-integration-attachmentsjson)
 
 ## Files
 
@@ -83,12 +84,15 @@ gets a sidecar.
 |---|---|
 | `ignored` | matched by `.contextignore`, so never sent to the model |
 | `code` | source code; its card stays technical |
-| `too_large` | over 20 MiB |
+| `too_large` | file over 20 MiB or Office Open XML archive over its expansion limits |
 | `unsupported` | a type the model is not given |
 | `model_error` | the model call failed; the next build asks again |
 | `no_model` | built with `--no-model`, or left over after `--max-calls`; the next build with a model asks |
 
 `reason` is set exactly when `status` is `none`.
+
+Office Open XML archives (DOCX, XLSX, PPTX) are limited to 2,048 members, 16 MiB uncompressed
+per member and 64 MiB uncompressed in total.
 
 **Refreshing cached descriptions.** A regular build reuses the model description of an unchanged
 file. Use `build [<root>] --refresh-kind <kind,...>` to refresh cached model descriptions for the
@@ -155,21 +159,27 @@ not be read, or is not what its name says.
 | `catalogs[]` | subfolders with their own `.catalog.json`: separate catalogs this one never enters or writes. `summary` comes from their root `_context.json` |
 | `collections[]` | folders declared in `.catalog.json`, listed and never entered: `name`, `index` (files relative to the catalog root that describe the collection, may be empty), `note` |
 | `files[]` | one entry per original in the folder |
+| `model_cache` | optional integrity evidence for reusing model output. Optional `summary_sha256` hashes the eligible folder input and its stored summary. Optional `descriptions` is a list of digests of generated file descriptions, each bound to the original's path and bytes. Digests are lowercase SHA-256 hex strings. |
 
 A `files[]` entry for a file **with** a sidecar is the short card: every card field except
 `structure` and `inherited`, plus `"sidecar": true`; the rest is in `<name>.meta.json`. A file
 **without** a sidecar appears as the full card plus `"sidecar": false`.
 
-**When a folder summary is rewritten.** The model reads up to 200 entries per folder, in order
-of subfolders, nested catalogs, collections, then files. It reads names, summaries and file
-counts for subfolders, names and summaries for nested catalogs, names and notes for collections,
-and names, kinds, titles, summaries and languages for files. The build starts with the deepest
-folders and recomputes a summary when one is missing, when the entry names (`children_sha256`)
-or any of those facts change, or when `--force` is set. If a model call fails or the call limit
-is reached, the build leaves a missing or outdated summary as `null` so the next build with a
-model retries it. A build without a model keeps an existing summary while the entry names stay
-the same and drops it when they change. `check` verifies that each subfolder's entry in its
-parent repeats the summary in the subfolder's own `_context.json`.
+Use a reader that supports `model_cache` for indexes that include it. The current CLI can read
+and check older indexes without it offline. The first build with a model regenerates eligible
+folder summaries that lack cache evidence.
+
+**When a folder summary is rewritten.** The model reads up to 200 eligible entries per folder,
+in order of subfolders, nested catalogs, collections, then files. It reads names, summaries and
+file counts for subfolders, names and summaries for nested catalogs, names and notes for
+collections, and names, kinds, titles, summaries and languages for files. The build starts
+with the deepest folders. A build with a model recomputes the summary when cache evidence is
+missing, when the eligible input or stored summary changes, or when `--force` is set. If a model
+call fails or the call limit is reached, the build keeps a verified previous summary if available.
+A missing or outdated summary stays `null` for the next build with a model to retry. A build
+without a model can keep verified summaries and can retain an unchanged tracked legacy summary
+for local display. `check` verifies that each subfolder's entry in its parent repeats the summary
+in the subfolder's own `_context.json`.
 
 ## Configuration `.catalog.json`
 
@@ -201,3 +211,62 @@ was given.
 Gitignore syntax, at the catalog root. A matching file is still cataloged and gets a technical
 card with `description.reason: "ignored"` (unless people wrote a summary for it), but its
 content is never sent to the model.
+
+## Thread integration `attachments.json`
+
+A thread importer writes this record beside a stored thread. The catalog CLI returns a single
+full card from `describe --json <file>`. The integration wraps a subset of that card with the
+attachment's identity, source and processing state. The CLI's `build` and `check` use the
+catalog formats above.
+
+```json
+{
+  "schema": 1,
+  "attachments": [{
+    "name": "invoice.pdf",
+    "mime": "application/pdf",
+    "bytes": 91220,
+    "sha256": null,
+    "source": { "kind": "gmail", "message": "18a1b2c3d4e5f607", "ref": "2", "url": null },
+    "card": {},
+    "skipped": "pending"
+  }]
+}
+```
+
+| Field | Value |
+|---|---|
+| `schema` | `1` for this wrapper |
+| `attachments` | array with one entry per recorded attachment |
+| `name` | original attachment filename |
+| `mime` | attachment media type as reported by the source |
+| `bytes` | downloaded size in bytes if available, otherwise the reported size or `null` |
+| `sha256` | lowercase SHA-256 hex digest of the downloaded bytes, or `null` until they are available |
+| `source` | object with `kind`, `message`, `ref` and `url`, as listed below |
+| `card` | successful `describe --json` card without `name`, `mime`, `bytes` and `sha256`, which sit on the attachment entry. The card retains its own `schema: 1`. Use `{}` until there is a description. |
+| `skipped` | `null` for a successfully described attachment, otherwise one of the reasons below |
+
+A successful card has a nonempty summary and `description.status` of `model` or `inherited`.
+
+| `source.kind` | `source.message` | `source.ref` | `source.url` |
+|---|---|---|---|
+| `slack` | message timestamp (`ts`) | Slack file ID | HTTPS file permalink, or `null` when unavailable |
+| `gmail` | Gmail message ID | MIME part ID (`partId`) | `null` |
+
+| `skipped` | Meaning |
+|---|---|
+| `pending` | the importer recorded the reference and the attachment is awaiting its first attempt |
+| `calendar` | calendar invitation or file |
+| `signature` | digital signature or small inline signature image |
+| `unsupported` | the integration or catalog tool cannot describe the file type |
+| `too_large` | the attachment exceeds the 20 MiB download or catalog size limit, or an Office archive exceeds its expansion limits |
+| `download_failed` | the attachment could not be downloaded |
+| `describe_failed` | the catalog tool failed or returned no usable description |
+| `tool_missing` | the catalog CLI was unavailable |
+| `over_limit` | an earlier run deferred the attachment because it reached its processing limit |
+
+The importer records where pending references came from. A scheduled retry verifies the source's
+permission, the reference's provenance and the thread's current `trust: clean` status before
+downloading. It can retry `pending`, `download_failed`, `describe_failed`, `tool_missing` and
+`over_limit`. Readers use the cards from complete threads with current `trust: clean` and treat
+their descriptions as untrusted data.
