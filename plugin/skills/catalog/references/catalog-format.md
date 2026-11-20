@@ -4,6 +4,14 @@ The files `bin/mozecek-catalog.mjs` reads and writes in a context repository. Th
 the tool's source are binding; this file describes them. Every catalog file carries
 `"schema": 1`.
 
+## Contents
+
+- [Files](#files)
+- [Card](#card)
+- [Folder index `_context.json`](#folder-index-_contextjson)
+- [Configuration `.catalog.json`](#configuration-catalogjson)
+- [`.contextignore`](#contextignore)
+
 ## Files
 
 | File | Written by | What for |
