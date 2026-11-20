@@ -56,7 +56,7 @@ gets a sidecar.
 | `bytes` | size of the original |
 | `sha256` | of the original bytes, lowercase hex; `null` only when the file could not be read. A card is fresh while this matches the file |
 | `title` | title read from the file, or `null` |
-| `summary` | at most 600 characters, in the language of the source; `null` until a model or an inherited source describes the file |
+| `summary` | in the language of the source, or `null` until the file is described. New model-written summaries are one sentence of at most 240 characters. The card accepts up to 600 characters, including inherited and previously generated summaries. |
 | `keywords` | at most 12, in the language of the source |
 | `entities` | at most 16 slugs (`a-z`, `0-9`, single hyphens): names written or spoken in the file |
 | `language` | BCP 47 tag of the dominant language (`cs`, `en-GB`), or `null` |
