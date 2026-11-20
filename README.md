@@ -1,4 +1,55 @@
-# Mozeček
+# Mozeček Community Edition
+
+Give your agents a way to pick up earlier work without asking you to explain the same decisions
+again.
+
+For developers and operators who want to self-host memory for their AI agents.
+
+## The problem
+
+- I start a new session and have to explain decisions we already made.
+- I know we wrote down the procedure somewhere. Now I have to dig through old chats to find it.
+- My agent says we agreed on something. I can't tell where it got that from.
+
+## See it
+
+![Walkthrough of finding the demo observatory's rain procedure and checking its source](docs/media/walkthrough.gif)
+
+[Watch the walkthrough as an MP4](docs/media/walkthrough.mp4).
+
+![Agent memory counts and a graph of topics from the demo observatory](docs/media/overview.png)
+
+*See how much an agent remembers and which topics are connected.*
+
+![Search results with the rain procedure and a preview of its citation](docs/media/search.png)
+
+*Find a saved procedure and preview its source before opening it.*
+
+![Saved rain procedure alongside the original checklist excerpt](docs/media/memory-source.png)
+
+*Check the saved procedure against the quoted checklist and its line number.*
+
+## What you get
+
+- Carry decisions into the next session. Mozeček keeps saved decisions in a store your agent can
+  search later.
+- Find a procedure even if you only remember what it was for. Mozeček searches by meaning as
+  well as by the words you type.
+- Check a detail before acting on it. When a memory has a citation, you can read the quoted
+  passage and see its line number.
+- Keep repeated notes from piling up. Mozeček merges duplicates overnight and moves memories
+  worth keeping into long-term storage.
+
+## Why we built it
+
+I checked the transcripts after one of our agents had processed them overnight. All 16 had been
+altered or damaged. One was missing more than 150,000 characters. The model made up a transcript
+line and recorded it as fact.
+
+I built Mozeček so our agents could keep what they learned between sessions and so I could check
+what they saved against the original.
+
+*Prokop Simek*
 
 ## Run it in 5 minutes
 
@@ -80,6 +131,10 @@ without a model or API key.
 
    The first search is empty. The save returns `"created": true`, and the second search returns
    the same memory ID and quotes the sentence you just saved.
+
+---
+
+## Reference
 
 Memory for agents. Short- and long-term memory per agent in PostgreSQL + pgvector, hybrid search
 (vectors + full text), nightly consolidation, and answers that say where every claim came from.
