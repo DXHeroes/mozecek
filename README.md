@@ -124,7 +124,7 @@ Verify the CE release using [Cosign](https://docs.sigstore.dev/cosign/system_con
 and the public key from this repository before starting it:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/dxheroes/mozecek:0.1.0
+cosign verify --key cosign.pub ghcr.io/dxheroes/mozecek:0.2.0
 docker compose pull
 docker compose up -d
 ```
