@@ -59,9 +59,9 @@ tools. Install the plugin to use its skills.
 
 ## See it
 
-![Walkthrough of finding the demo observatory's rain procedure and checking its source](docs/media/walkthrough.gif)
+https://github.com/user-attachments/assets/06985d06-f4ef-4398-8949-9d3d59912267
 
-[Watch the walkthrough as an MP4](docs/media/walkthrough.mp4).
+[Download the walkthrough (MP4 with English subtitles)](docs/media/walkthrough.mp4)
 
 ![Agent memory counts and a graph of topics from the demo observatory](docs/media/overview.png)
 
