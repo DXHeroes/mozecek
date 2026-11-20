@@ -9,3 +9,4 @@ those two lists stops matching the other, that is a bug.
 | `/mozecek:recall` | `recall/` | Searches memory and answers with citations, superseded versions and admitted gaps; read-only |
 | `/mozecek:sleep` | `sleep/` | Reports the nightly consolidation from `stats`, and the command for an operator when a run out of turn is needed |
 | `/mozecek:review` | `review/` | Reviews recent memory: duplicates, contradictions, thinly evidenced rows; writes only with `--apply` |
+| `/mozecek:catalog` | `catalog/` | Walks a context repository's catalog to find information; refreshes, sets up or opens a refresh PR with `bin/mozecek-catalog.mjs` |

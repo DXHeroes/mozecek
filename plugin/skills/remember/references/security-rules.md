@@ -30,7 +30,12 @@ before use: `[[ "$id" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || exit 1`.
 - Resolve a contradiction with `supersede` and a `reason`, not a silent overwrite. `forget` is
   the last resort and always carries a reason.
 - The `review` skill proposes; it acts only with `--apply`. Without that flag it writes nothing.
-- This plugin does not modify files in a repository.
+- Repository writes are limited to the `catalog` skill. Run the catalog tool to generate
+  `_context.json` and `<file>.meta.json` for an authorized catalog root. In `setup`, write
+  `.catalog.json` and `.contextignore` after the owner approves their contents. An authorized
+  nested migration can move verified former parent indexes to a backup outside the cataloged
+  trees. The authorized `pr` procedure can create a branch and commit the reviewed generated
+  files for human review.
 
 ## 4. Secrets
 - An agent token is scoped to reading and writing one agent's memory. The client keeps it itself
@@ -49,9 +54,16 @@ before use: `[[ "$id" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || exit 1`.
   applies when you assemble the text for `remember` by hand.
 
 ## 5. Scope
-The plugin talks only to the Mozeček instance it is configured for. It writes nowhere else and
-messages no one — not a chat, not a tracker. When someone needs to be told, say so in your
-output; sending it is the caller's business, not the plugin's.
+Memory operations use the configured Mozeček instance. For `catalog`, the owner can authorize
+the following external operations through a request or schedule.
+
+- A model-enabled build sends eligible data from the authorized catalog root to Gemini, subject
+  to the catalog configuration and `.contextignore`. Offline builds and checks stay local.
+- The `pr` procedure fetches the authorized repository's default branch, pushes a branch with
+  the reviewed generated catalog changes, and opens a pull request for a person to review and
+  merge. Permission to refresh a catalog locally grants only local writes.
+
+Any other external communication is the caller's responsibility.
 
 ## 6. When you are not sure
 Ask the owner and stop. In a non-interactive run, write down what you are waiting for and stop.
