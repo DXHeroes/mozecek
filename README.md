@@ -35,8 +35,8 @@ For developers and operators who want to self-host memory for their AI agents.
   search later.
 - Find a procedure even if you only remember what it was for. Mozeček searches by meaning as
   well as by the words you type.
-- Check a detail before acting on it. When a memory has a citation, you can read the quoted
-  passage and see its line number.
+- Check a detail before acting on it. Open a saved memory to see any recorded excerpt or file
+  location, including a line number when available.
 - Keep repeated notes from piling up. Mozeček merges duplicates overnight and moves memories
   worth keeping into long-term storage.
 
