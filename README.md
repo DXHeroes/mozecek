@@ -132,6 +132,40 @@ without a model or API key.
    The first search is empty. The save returns `"created": true`, and the second search returns
    the same memory ID and quotes the sentence you just saved.
 
+## Community vs. Enterprise
+
+| | Community Edition | Enterprise Edition |
+| --- | --- | --- |
+| Agents per instance | 10 | Unlimited |
+| Memory, search, nightly consolidation, and MCP | Included | Included |
+
+The Community Edition limit applies only when you try to create an eleventh agent. Existing
+agents can keep reading and writing memory.
+
+The Community Edition image (`ghcr.io/dxheroes/mozecek`) is proprietary and free to self-host
+for personal or internal business use. You can keep backups and copies in private registries
+used only by your organization. You need a separate written agreement to redistribute the image
+publicly or offer Mozeček as a hosted service to third parties. See the [image licence](IMAGE-LICENSE.txt).
+
+Enterprise code ships separately in `ghcr.io/dxheroes/mozecek-ee`. Pulling that image requires
+authorized registry access. We agree on support and deployment assistance case by case.
+For Enterprise Edition, [contact DX Heroes](https://dxheroes.io/contact).
+
+## What we are working on
+
+### New in 0.2.0
+
+- The twelfth MCP tool, `mozecek_context`, returns original passages and citations within a size
+  limit. It joins the [original eleven tools](#what-it-does).
+- Use revision history to search what Mozeček had recorded before a later correction.
+- Look up ticket IDs and version numbers directly. Search can also find words in a link's path.
+
+### In progress
+
+- Build and refresh a catalog of your project's tracked documents from the CLI or an agent skill.
+
+Last updated 20 November 2026. [Container image versions](https://github.com/orgs/DXHeroes/packages/container/package/mozecek)
+
 ---
 
 ## Reference
@@ -215,25 +249,6 @@ first agent. That key is the `MOZECEK_TOKEN` above.
 
 The service runs its own migrations at boot. `docker compose logs -f api` shows whether it came
 up; `/healthz` and `/readyz` answer the same question for a machine.
-
-## Editions
-
-| | Free | Enterprise |
-|---|---|---|
-| Agents per instance | 10 | unlimited |
-| Memory, search, sleep, MCP | unlimited | unlimited |
-
-The `ghcr.io/dxheroes/mozecek` image is the free edition. The ceiling applies **only to creating
-an eleventh agent** — existing agents keep working, and reading and writing memory are never
-limited. Enterprise code is absent from the CE image. The enterprise image is distributed
-separately as `ghcr.io/dxheroes/mozecek-ee` and requires authorized registry access.
-
-CE is proprietary software, free for personal and internal business self-hosting. Your own
-backups and internal registry copies are permitted. Public redistribution and offering Mozeček
-as a hosted service require a separate agreement; see [the image licence](IMAGE-LICENSE.txt).
-
-For the enterprise edition, write to
-[prokop.simek@dxheroes.io](mailto:prokop.simek@dxheroes.io).
 
 ## Security
 
